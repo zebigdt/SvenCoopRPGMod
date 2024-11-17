@@ -2,8 +2,7 @@
 dictionary g_PlayerCoreData;
 class PlayerData
 {
-	array<CAchievement@> hAchievements;	// Our achievements
-	array<CPlayerModelBase@> hAvailableModels;	// Our models
+	array<CAchievement@> hAchievements;	//Achievements
 	
 	// Our saved SteamID
 	string szSteamID;
@@ -13,26 +12,23 @@ class PlayerData
 	int iPoints = 0;					// Skill Points
 	int iPrestige = 0;					// Prestige
 	int iSouls = 0;						// Money (Unused)
-	int iStat_health = 0;				// Vitality (Max Health)
+	int iStat_health = 0;				// Max Health
 	int iStat_health_regen = 0;			// Health Regeneration
-	int iStat_armor = 0;				// Superior Armor (Max Armor)
-	int iStat_armor_regen = 0;			// Nano Armor (Armor Regeneration)
-	int iStat_ammoregen = 0;			// The Magic Pocket (Ammo Resupply)
-	int iStat_explosiveregen = 0;			// A Gift From The Gods (Explosives Resupply)
-	int iStat_doublejump = 0;			// Icarus Potion (Extra Jumps)
-	int iStat_firstaid = 0;			// The Warrior's Battlecry (Heal Aura)
-	int iStat_shockrifle = 0;			// Holy Armor (Shock Roach)
+	int iStat_armor = 0;				// Max Armor
+	int iStat_armor_regen = 0;			// Armor Regeneration
+	int iStat_ammoregen = 0;			// Ammo Regeneration
+	int iStat_explosiveregen = 0;		// Explosives Regeneration
+	int iStat_doublejump = 0;			// Double Jump
+	int iStat_firstaid = 0;				// First Aid
+	int iStat_shockrifle = 0;			// Shock Rifle
 	
-	int iDoubleJump = 0;				// Extra Jumps value
+	int iDoubleJump = 0;				// Double Jump
 	
 	int iScore = 0;						// Score
 	int iExp = 0;						// EXP
 	int iExpMax = 0;					// Max EXP
 	
 	int iMedals = 0;					// Medals - Unused
-	
-	string szModel = "null";			// Our model
-	string szModelSpecial = "null";		// Special model (only the player can pick this)
 	
 	// Weekly stuff
 	int iWeekly_Exp = 0;				// Special Weekly EXP bonus
@@ -48,7 +44,7 @@ class PlayerData
 	int iWaitTimer_SndEffect = 0;		// We don't want to spam this
 	int iWaitTimer_UseModel = 3;
 	int iWaitTimer_AmmoDrop = 5;		// First Ammo Resupply
-	int iWaitTimer_WeaponDrop = 10;	// First Explosive Drop
+	int iWaitTimer_WeaponDrop = 10;		// First Explosive Drop
 
 	int iWaitTimer_HolyArmor = 0;
 	int iWaitTimer_HolyArmor_Max = 10;	// Super Weapon Cooldown
@@ -95,14 +91,6 @@ class PlayerData
 		iWaitTimer_Hurt_Snd = 0;
 		iWaitTimer_SndEffect = 0;
 		iWaitTimer_UseModel = 3;
-		//iWaitTimer_AmmoDrop = 90;
-		//iWaitTimer_WeaponDrop = 300;
-		//iWaitTimer_HolyArmor = 0;
-		//iWaitTimer_HolyArmor_Max = 300;
-		//iWaitTimer_HolyArmor_Reset = -1;
-		//iWaitTimer_BattleCry = 0;
-		//iWaitTimer_BattleCry_Max = 120;
-		//iWaitTimer_BattleCry_Reset = -1;
 		
 		iWeekly_Exp = 0;
 		iWeekly_Exp_Max = 0;
@@ -153,39 +141,5 @@ class PlayerData
 			hAchievements.insertLast( @pAch );
 		}
 		return CanGiveAchievement( szID );
-	}
-	
-	private int CanAddPlayerModel( CPlayerModelBase@ pModel )
-	{
-		if ( pModel is null ) return -1;
-		if ( hAvailableModels.findByRef( @pModel ) != -1 ) return 0;
-		hAvailableModels.insertLast( @pModel );
-		return 1;
-	}
-	
-	int AddPlayerModel( string szModel )
-	{
-		for ( uint i = 0; i < g_LoadedPlayerModels.length(); i++ )
-		{
-			CPlayerModelBase@ model = @g_LoadedPlayerModels[ i ];
-			if ( model is null ) continue;
-			if ( model.GetModel() == szModel ) return CanAddPlayerModel( model );
-		}
-		return -1;
-	}
-	
-	bool RemovePlayerModel( string szModel )
-	{
-		for ( uint i = 0; i < hAvailableModels.length(); i++ )
-		{
-			CPlayerModelBase@ model = @hAvailableModels[ i ];
-			if ( model is null ) continue;
-			if ( model.GetModel() == szModel )
-			{
-				hAvailableModels.removeAt( i );
-				return true;
-			}
-		}
-		return false;
 	}
 }

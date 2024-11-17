@@ -11,15 +11,14 @@
 //#include "weapons/weapon_usp45akimbo"
 //#include "weapons/weapon_spas12e"
 
-#include "lib/playermodels"
 #include "lib/giftfromthegods"
-//#include "lib/weaponshop" //Completely empty file
+//#include "lib/weaponshop" //Not yet written
 
 void RegisterAllWeapons()
 {
 	//Register custom weapons and ammo
 
-		// Weapons
+	//Custom Weapons Register
 	//RegisterKeyBlade();
 	//RegisterWeapon_buffsg55();
 	//RegisterWeapon_skull11();
@@ -31,7 +30,7 @@ void RegisterAllWeapons()
 	//RegisterWeapon_usp45akimbo5();
 	//RegisterWeapon_spas12e();
 
-		// Ammo
+		//Custom Ammo Register
 	//RegisterAmmoCrystals();
 }
 

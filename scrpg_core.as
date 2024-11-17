@@ -13,12 +13,10 @@ int g_AllBonusEXP = 0;
 enum MenuEnum
 {
 	MENU_SKILLS = 0,
-	MENU_SHOP,
-	MENU_MODELS
+	MENU_SHOP
 };
 
 #include "menu/skills"
-#include "menu/models"
 
 // Give our garbage
 #include "give_donator"
@@ -26,7 +24,6 @@ enum MenuEnum
 
 Menu::SkillMenu g_SkillMenu;
 Menu::SkillMenuEx g_SkillMenuEx;
-Menu::PlayerModelsMenu g_PlayerModelsMenu;
 // End
 
 // Gift from the gods
@@ -75,20 +72,6 @@ final class CSCRPGCore
 	{
 		// Load our DB file
 		LoadDB();
-		
-		// Precache sounds
-		PrecacheCoreSound( SND_LVLUP );
-		PrecacheCoreSound( SND_LVLUP_800 );
-		PrecacheCoreSound( SND_PRESTIGE );
-		PrecacheCoreSound( SND_READY );
-		PrecacheCoreSound( SND_AURA01 );
-		PrecacheCoreSound( SND_AURA02 );
-		PrecacheCoreSound( SND_AURA03 );
-		PrecacheCoreSound( SND_HOLYGUARD );
-		PrecacheCoreSound( SND_HOLYWEP );
-		PrecacheCoreSound( SND_JUMP );
-		PrecacheCoreSound( SND_JUMP_LAND );
-		PrecacheCoreSound( SND_NULL );
 	}
 	
 	~CSCRPGCore()
@@ -133,11 +116,7 @@ final class CSCRPGCore
 					{
 						if ( data.iWaitTimer_UseModel == 0 )
 						{
-							SetPlayerModel( pPlayer );
-							// Play the sound, because we want to notify the players that we spawned!
-							PlayPlayerSound( pPlayer, sound_spawn );
-							if ( data.iPrestige >= 2 )
-								GiveToPlayer::GiveItem( pPlayer, "item_longjump" );
+							
 						}
 						data.iWaitTimer_UseModel--;
 					}
@@ -195,23 +174,6 @@ final class CSCRPGCore
 			g_Achivements.GiveAchievement( pPlayer, "extreme_uboa", true );
 		if ( IsCurrentMap( "inv_dojo" ) )
 			g_Achivements.GiveAchievement( pPlayer, "martialarts", true );
-		
-		// Check if we can add our player models tied to achievements
-		AchievementPlayerModels( data );
-	}
-		////Achievement Rewards - Playermodels
-	void AchievementPlayerModels( PlayerData@ data )
-	{
-		if ( data is null ) return;
-		
-		if ( data.FindAchievement( "extreme_uboa" ) )
-			data.AddPlayerModel( "afterlife_uboa" );
-		
-		if ( data.FindAchievement( "checkybrecky" ) )
-		{
-			data.AddPlayerModel( "afterlife_spetz1" );
-			data.AddPlayerModel( "afterlife_spetz2" );
-		}
 	}
 			//Achievement Rewards
 	void CheckForSpecificAchievement( CBasePlayer@ pPlayer, string szIDCheck )
@@ -726,10 +688,8 @@ final class CSCRPGCore
 			case 12: data.iStat_doublejump = iOutput; break;
 			case 13: data.iStat_firstaid = iOutput; break;
 			case 14: data.iStat_shockrifle = iOutput; break;
-			case 15: data.szModel = szLine; break;
-			case 16: data.szModelSpecial = szLine; break;
-			case 17: data.bIsCommunity = iOutput > 0 ? true : false; break;
-			case 18: data.bIsDonator = iOutput > 0 ? true : false; break;
+			case 15: data.bIsCommunity = iOutput > 0 ? true : false; break;
+			case 16: data.bIsDonator = iOutput > 0 ? true : false; break;
 		}
 		
 		g_PlayerCoreData[SteamID] = data;
@@ -783,14 +743,6 @@ final class CSCRPGCore
 		data.iStat_doublejump = LoadFromDB( SteamID, "doublejump" );
 		data.iStat_firstaid = LoadFromDB( SteamID, "battlecry" );
 		data.iStat_shockrifle = LoadFromDB( SteamID, "holyarmor" );
-	}
-	
-	private void AddPlayerModel( CBasePlayer@ pPlayer, string SteamID, string szModel )
-	{
-		if ( !g_PlayerCoreData.exists( SteamID ) ) return;
-		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[SteamID]);
-		if ( data is null ) return;
-		data.AddPlayerModel( szModel );
 	}
 	
 	// Only used by the local files
@@ -855,8 +807,6 @@ final class CSCRPGCore
 						12 - STAT_JUMP
 						13 - STAT_AURA
 						14 - STAT_HOLYARMOR
-						15 - PLAYER_MODEL
-						16 - PLAYER_MODEL_SPECIAL
 					*/
 					if ( parsed.length() < 14 )
 						continue;
@@ -877,16 +827,11 @@ final class CSCRPGCore
 						InsertData( sFix, SteamID, 12, parsed[12] );
 						InsertData( sFix, SteamID, 13, parsed[13] );
 						InsertData( sFix, SteamID, 14, parsed[14] );
-						InsertData( sFix, SteamID, 15, parsed[15] );
-						InsertData( sFix, SteamID, 16, parsed[16] );
 					}
 				}
 				// Our achievement we have earned
 				else if ( CheckConfigDefine( sFix, parsed[0], "achievement" ) )
 					g_Achivements.GiveAchievement( pPlayer, parsed[ 1 ], false, atoi( parsed[ 2 ] ) );
-				// Our models
-				else if ( CheckConfigDefine( sFix, parsed[0], "model" ) )
-					AddPlayerModel( pPlayer, SteamID, parsed[ 1 ] );
 			}
 			m_bLoadedDB = true;
 			player_data.Close();
@@ -909,8 +854,7 @@ final class CSCRPGCore
 			+ data.iSouls + " " + data.iExp + " " + data.iExpMax + " " + data.iStat_health
 			+ " " + data.iStat_armor + " " + data.iStat_health_regen + " " + data.iStat_armor_regen + " "
 			+ data.iStat_ammoregen + " " + data.iStat_explosiveregen + " " + data.iStat_doublejump + " "
-			+ data.iStat_firstaid + " " + data.iStat_shockrifle + " " + data.szModel + " " + data.szModelSpecial + " "
-			+ data.bIsCommunity + " " + data.bIsDonator + "\n";
+			+ data.iStat_firstaid + " " + data.iStat_shockrifle + " " + data.bIsCommunity + " " + data.bIsDonator + "\n";
 			
 			// Add our achievements
 			if ( data.hAchievements.length() > 0 )
@@ -921,18 +865,6 @@ final class CSCRPGCore
 					CAchievement@ pAchievement = data.hAchievements[ i ];
 					if ( pAchievement is null ) continue;
 					output += "achievement " + pAchievement.GetID() + " " + pAchievement.GetCurrent() + "\n";
-				}
-			}
-			
-			// Add our models
-			if ( data.hAvailableModels.length() > 0 )
-			{
-				output += "\n";
-				for ( uint i = 0; i < data.hAvailableModels.length(); i++ )
-				{
-					CPlayerModelBase@ pModel = data.hAvailableModels[ i ];
-					if ( pModel is null ) continue;
-					output += "model " + pModel.GetModel() + "\n";
 				}
 			}
 			
@@ -994,12 +926,6 @@ final class CSCRPGCore
 		if ( data is null ) return;
 		float flLevelCalculate = 1; //Base XP
 		int iCalculateEXP = int( flLevelCalculate ) + CalculateBonusEXP( data );
-
-		//Old XP Reward
-		//if ( data is null ) return;
-		//int randnum = Math.RandomLong( 500, 1000 );
-		//float flLevelCalculate = float( data.iLevel + randnum ) * 10 * 7.2;
-		//int iCalculateEXP = int( flLevelCalculate ) + CalculateBonusEXP( data );
 		
 		// Set the calculated EXP.
 		data.iExp += iCalculateEXP;
@@ -1189,12 +1115,6 @@ final class CSCRPGCore
 		// TODO
 	}
 	
-	private void DisplayModels( CBasePlayer@ pPlayer )
-	{
-		if ( pPlayer is null ) return;
-		g_PlayerModelsMenu.Show( pPlayer );
-	}
-	
 	private void ClearThinker()
 	{
 		if ( hThinker is null ) return;
@@ -1346,72 +1266,6 @@ final class CSCRPGCore
 			pPlayer.GiveNamedItem( szWeapon );
 	}
 	
-	// Player model stuff!
-	void GiveModelPlayer( CBasePlayer@ pCaller, CBasePlayer@ pPlayer, string szModel )
-	{
-		if ( pCaller is null ) return;
-		if ( pPlayer is null ) return;
-		string szSteamId = g_EngineFuncs.GetPlayerAuthId( pCaller.edict() );
-		if ( !IsAdministrators( pCaller, szSteamId ) ) return;
-		if ( !g_PlayerCoreData.exists(szSteamId) ) return;
-		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
-		if ( data is null ) return;
-		int iRet = data.AddPlayerModel( szModel );
-		string strRet;
-		switch( iRet )
-		{
-			case -1: strRet = "The model " + szModel + " does not exist.\n"; break;
-			case 0: strRet = "The player already owns the model " + szModel + ".\n"; break;
-			case 1: strRet = szModel + " has been added to the player.\n"; break;
-		}
-		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, strRet);
-	}
-	
-	void RemoveModelFromPlayer( CBasePlayer@ pCaller, CBasePlayer@ pPlayer, string szModel )
-	{
-		if ( pCaller is null ) return;
-		if ( pPlayer is null ) return;
-		string szSteamId = g_EngineFuncs.GetPlayerAuthId( pCaller.edict() );
-		if ( !IsAdministrators( pCaller, szSteamId ) ) return;
-		if ( !g_PlayerCoreData.exists(szSteamId) ) return;
-		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
-		if ( data is null ) return;
-		if ( data.RemovePlayerModel( szModel ) )
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, szModel + " has been removed from the player.\n");
-		else
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, "The player does not own the model " + szModel + ".\n");
-	}
-	
-	void SetModelOnPlayer( CBasePlayer@ pCaller, CBasePlayer@ pPlayer, string szModel, bool special )
-	{
-		if ( pCaller is null ) return;
-		if ( pPlayer is null ) return;
-		string szSteamId = g_EngineFuncs.GetPlayerAuthId( pCaller.edict() );
-		if ( !IsAdministrators( pCaller, szSteamId ) ) return;
-		if ( !g_PlayerCoreData.exists(szSteamId) ) return;
-		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
-		if ( data is null ) return;
-		if ( special )
-			data.szModelSpecial = szModel;
-		else
-			data.szModel = szModel;
-	}
-	
-	void UnsetModelFromPlayer( CBasePlayer@ pCaller, CBasePlayer@ pPlayer, bool special )
-	{
-		if ( pCaller is null ) return;
-		if ( pPlayer is null ) return;
-		string szSteamId = g_EngineFuncs.GetPlayerAuthId( pCaller.edict() );
-		if ( !IsAdministrators( pCaller, szSteamId ) ) return;
-		if ( !g_PlayerCoreData.exists(szSteamId) ) return;
-		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
-		if ( data is null ) return;
-		if ( special )
-			data.szModelSpecial = "null";
-		else
-			data.szModel = "null";
-	}
-	
 	void Reset()
 	{
 		g_PlayerCoreData.deleteAll();
@@ -1553,9 +1407,6 @@ final class CSCRPGCore
 		if ( pPlayer is null ) return;
 		string szSteamId = g_EngineFuncs.GetPlayerAuthId( pPlayer.edict() );
 		
-		SetPlayerModel( pPlayer );
-		PlayPlayerSound( pPlayer, sound_spawn );
-		
 		if( g_PlayerCoreData.exists( szSteamId ) )
 		{
 			PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
@@ -1592,7 +1443,6 @@ final class CSCRPGCore
 			data.iWaitTimer_Hurt = 5 - (data.iStat_health_regen + data.iStat_armor_regen) / 5; //Regen Delay Timer - Time to wait after taking damage before health and armor regen kicks in
 			if ( data.iWaitTimer_Hurt_Snd == 0 )
 			{
-				PlayPlayerSound( pPlayer, sound_pain );
 				data.iWaitTimer_Hurt_Snd = 1;
 			}
 		}
@@ -1699,7 +1549,6 @@ final class CSCRPGCore
 		{
 			case MENU_SKILLS: DisplaySkills( pPlayer ); break;
 			case MENU_SHOP: DisplayShop( pPlayer ); break;
-			case MENU_MODELS: DisplayModels( pPlayer ); break;
 		}
 	}
 }

@@ -1,14 +1,10 @@
 #include "include_rpg"
-#include "difficulty_settings"
 #include "scrpg_core"
+#include "difficulty_settings"
 
 CClientCommand c_rpgmod_medic( "shockrifle", "", @CVAR_MedicSound );
 CClientCommand c_rpgmod_grenade( "firstaid", "", @CVAR_GrenadeSound );
 CClientCommand c_rpgmod_give_weapon( "give_weapon", "<classname>", @CVAR_GiveWeapon );
-CClientCommand c_rpgmod_give_model( "give_model", "<player> <model>", @CVAR_Model_GIVE );
-CClientCommand c_rpgmod_set_model( "set_model", "<player> <model> <special>", @CVAR_Model_SET );
-CClientCommand c_rpgmod_unset_model( "unset_model", "<player> <special>", @CVAR_Model_UNSET );
-CClientCommand c_rpgmod_remove_model( "remove_model", "<player> <model>", @CVAR_Model_REMOVE );
 
 void CVAR_MedicSound( const CCommand@ args )
 {
@@ -31,61 +27,8 @@ void CVAR_GiveWeapon( const CCommand@ args )
 	g_SCRPGCore.AdminGiveWeapon( pPlayer, args[ 1 ] );
 }
 
-void CVAR_Model_GIVE( const CCommand@ args )
-{
-	CBasePlayer@ pCaller = g_ConCommandSystem.GetCurrentPlayer();
-	if ( pCaller is null ) return;
-	CBasePlayer@ pTarget = @g_PlayerFuncs.FindPlayerByName( args[ 1 ] );
-	if ( pTarget is null )
-	{
-		g_PlayerFuncs.ClientPrint(pCaller, HUD_PRINTCONSOLE, args[ 1 ] + " is not a valid player!\n  NOTE: It's case sensitive!");
-		return;
-	}
-	g_SCRPGCore.GiveModelPlayer( pCaller, pTarget, args[ 2 ] );
-}
-
-void CVAR_Model_SET( const CCommand@ args )
-{
-	CBasePlayer@ pCaller = g_ConCommandSystem.GetCurrentPlayer();
-	if ( pCaller is null ) return;
-	CBasePlayer@ pTarget = @g_PlayerFuncs.FindPlayerByName( args[ 1 ] );
-	if ( pTarget is null )
-	{
-		g_PlayerFuncs.ClientPrint(pCaller, HUD_PRINTCONSOLE, args[ 1 ] + " is not a valid player!\n  NOTE: It's case sensitive!");
-		return;
-	}
-	g_SCRPGCore.SetModelOnPlayer( pCaller, pTarget, args[ 2 ], atoi( args[ 3 ] ) > 0 ? true : false );
-}
-
-void CVAR_Model_UNSET( const CCommand@ args )
-{
-	CBasePlayer@ pCaller = g_ConCommandSystem.GetCurrentPlayer();
-	if ( pCaller is null ) return;
-	CBasePlayer@ pTarget = @g_PlayerFuncs.FindPlayerByName( args[ 1 ] );
-	if ( pTarget is null )
-	{
-		g_PlayerFuncs.ClientPrint(pCaller, HUD_PRINTCONSOLE, args[ 1 ] + " is not a valid player!\n  NOTE: It's case sensitive!");
-		return;
-	}
-	g_SCRPGCore.UnsetModelFromPlayer( pCaller, pTarget, atoi( args[ 2 ] ) > 0 ? true : false );
-}
-
-void CVAR_Model_REMOVE( const CCommand@ args )
-{
-	CBasePlayer@ pCaller = g_ConCommandSystem.GetCurrentPlayer();
-	if ( pCaller is null ) return;
-	CBasePlayer@ pTarget = @g_PlayerFuncs.FindPlayerByName( args[ 1 ] );
-	if ( pTarget is null )
-	{
-		g_PlayerFuncs.ClientPrint(pCaller, HUD_PRINTCONSOLE, args[ 1 ] + " is not a valid player!\n  NOTE: It's case sensitive!");
-		return;
-	}
-	g_SCRPGCore.RemoveModelFromPlayer( pCaller, pTarget, args[ 2 ] );
-}
-
 void LoadImportantStuff()
 {
-	LoadPlayerModels();
 	LoadRPGCore();
 	
 	if ( g_DifficultySettings !is null )
@@ -139,9 +82,7 @@ HookReturnCode RPGMOD_PlayerSpawn(CBasePlayer@ pPlayer)
 
 HookReturnCode RPGMOD_PlayerKilled( CBasePlayer@ pPlayer, CBaseEntity@ pAttacker, int iGib )
 {
-	PlayerHasDied( pPlayer );
 	g_Achivements.GiveAchievement( pPlayer, "endyourlife", true );
-	PlayPlayerSound( pPlayer, sound_death );
 	return HOOK_CONTINUE;
 }
 
@@ -178,7 +119,6 @@ HookReturnCode RPGMOD_PlayerPostThink( CBasePlayer@ pPlayer )
 		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
 		if ( data.flWaitTimer_SndEffect_Delay <= 0.0 && data.bSndEffect )
 		{
-			PlayPlayerSound( pPlayer, data.bSndEffectMedic ? sound_medic : sound_grenade, true );
 			data.bSndEffect = false;
 		}
 		else
@@ -286,8 +226,6 @@ HookReturnCode RPGMOD_ClientSay( SayParameters@ pParams )
 		g_SCRPGCore.ShowMenu( pPlayer, MENU_SKILLS );
 	else if ( IsValidMenu( args.Arg(0), "shop" ) )
 		g_SCRPGCore.ShowMenu( pPlayer, MENU_SHOP );
-	else if ( IsValidMenu( args.Arg(0), "model" ) )
-		g_SCRPGCore.ShowMenu( pPlayer, MENU_MODELS );
 	
 	// stuff
 	if ( IsValidMenu( args.Arg(0), "reset" ) )
