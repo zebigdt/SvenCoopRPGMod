@@ -81,7 +81,7 @@ namespace GiftFromTheGods
 				gaveAmmoTypeMap[m_AmmoDrop[i]] = false;
 			}
 
-
+			//TEST COMMIT
 			// Iterate through the player's weapon inventory
 			for (uint i = 0; i < MAX_ITEM_TYPES; i++) // MAX_ITEM_TYPES is the max number of weapon slots
 			{
