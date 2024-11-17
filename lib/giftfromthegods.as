@@ -18,7 +18,7 @@ namespace GiftFromTheGods
 	// Just give the player some random ammo
 	final class AmmoDrop
 	{
-		private array<string> m_AmmoDrop = {
+		private array<string> m_BasicAmmoTypes = {
 			"9mm",
 			"buckshot",
 			"357",
@@ -29,14 +29,17 @@ namespace GiftFromTheGods
 			"sporeclip",
 			"hornets",
 			"uranium",
+			"snarks"
+		};
+
+		private array<string> m_ExplosiveAmmoTypes = {
 			"rockets",
 			"trip mine",
 			"satchel charge",
 			"hand grenade",
 			"ARgrenades",
-			"snarks"
-			//"afterlife_crystals", Removed
 		};
+
 		
 		private array<CAmmoDrop@> m_Items;
 		
@@ -73,90 +76,42 @@ namespace GiftFromTheGods
 		{
 			if (pPlayer is null) return;
 
-			dictionary gaveAmmoTypeMap;
+			dictionary givenAmmoTypeMap;
 
 			// Initialize the map to track ammo types already given
-			for (uint i = 0; i < m_AmmoDrop.length(); i++)
+			for (uint i = 0; i < m_BasicAmmoTypes.length(); i++)
 			{
-				gaveAmmoTypeMap[m_AmmoDrop[i]] = false;
+				givenAmmoTypeMap[m_BasicAmmoTypes[i]] = false;
 			}
 
-			//TEST COMMIT
 			// Iterate through the player's weapon inventory
 			for (uint i = 0; i < MAX_ITEM_TYPES; i++) // MAX_ITEM_TYPES is the max number of weapon slots
 			{
-				CBasePlayerItem@ pItem = pPlayer.m_rgpPlayerItems(i); // Get the weapon in slot i
+				CBasePlayerItem@ pItem = pPlayer.m_rgpPlayerItems(i); // Get the i-th slot
 
-				if (pItem !is null)
+				// Loop through linked list of weapons in this slot
+        		while(pItem !is null) 
 				{
-					CBasePlayerWeapon@ pWeapon = cast<CBasePlayerWeapon@>(pItem); // Cast to weapon type
-					if (pWeapon !is null)
+					string primaryAmmo = pItem.pszAmmo1(); //Weapon's primary ammo type.
+
+					// Check whether the ammo type is normal and not explosive
+					if(m_BasicAmmoTypes.find(primaryAmmo) != -1)
 					{
-						string primaryAmmo = pWeapon.pszAmmo1(); // Weapon's primary ammo type
-						string secondaryAmmo = pWeapon.pszAmmo2(); // Weapon's secondary ammo type
-						int maxAmmo1 = pPlayer.GetMaxAmmo(primaryAmmo); // Get max ammo for primary ammo type
-						int maxAmmo2 = pPlayer.GetMaxAmmo(secondaryAmmo); // Get max ammo for secondary ammo type
+						int maxPrimaryAmmo = pItem.iMaxAmmo1();  // Max ammo for primary ammo type.
 
-						// Give primary ammo if valid not already given
-						if (primaryAmmo != "" && !bool(gaveAmmoTypeMap[primaryAmmo]))
+						// Give primary ammo if not already given
+						if (!bool(givenAmmoTypeMap[primaryAmmo]))
 						{
-							pPlayer.GiveAmmo(int(Math.Ceil(iStat_ammoregen * 0.9)), primaryAmmo, maxAmmo1);
-							gaveAmmoTypeMap[primaryAmmo] = true;
-						}
-
-						// Give secondary ammo if valid
-						if (secondaryAmmo != "")
-						{
-							pPlayer.GiveAmmo(1, secondaryAmmo, maxAmmo2);
+							int amountToGive = int(Math.Ceil(iStat_ammoregen * 0.9));
+							pPlayer.GiveAmmo(amountToGive, primaryAmmo, maxPrimaryAmmo);
+							givenAmmoTypeMap[primaryAmmo] = true;
 						}
 					}
-				}
+					
+					@pItem = cast<CBasePlayerItem@>(pItem.m_hNextItem.GetEntity()); // Move to next weapon
+        		}
 			}
 		}
-
-		// void GiveAmmoForWeapon(CBasePlayer@ pPlayer, const string& in weaponName, int iDropLevel)
-		// {
-		// 	if (weaponName == "weapon_9mmhandgun" || weaponName == "weapon_mp5")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 1.4) + 1, "9mm", 250);
-		// 	}
-		// 	else if (weaponName == "weapon_shotgun")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.7) + 1, "buckshot", 125);
-		// 	}
-		// 	else if (weaponName == "weapon_357" || weaponName == "weapon_eagle" )
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.5) + 1, "357", 36);
-		// 	}
-		// 	else if (weaponName == "weapon_m16" || weaponName == "weapon_saw" )
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 1.1) + 1, "556", 600);
-		// 	}
-		// 	else if (weaponName == "weapon_crossbow")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.4) + 1, "bolts", 50);
-		// 	}
-		// 	else if (weaponName == "weapon_gauss" || weaponName == "weapon_egon")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.4) + 1, "uranium", 100);
-		// 	}
-		// 	else if (weaponName == "weapon_shockrifle")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.9) + 1, "shock charges", 100);
-		// 	}
-		// 	else if (weaponName == "weapon_hornetgun")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.9) + 1, "hornets", 100);
-		// 	}
-		// 	else if (weaponName == "weapon_sporelauncher")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.1) + 1, "sporeclip", 30);
-		// 	}
-		// 	else if (weaponName == "weapon_snark")
-		// 	{
-		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.1) + 1, "snarks", 15, true);
-		// 	}
-		// }
 	
 		void GiveDropExplosive( CBasePlayer@ pPlayer, int iDropLevel ) //New void that I added to seperate explosive regen from normal
 		{
