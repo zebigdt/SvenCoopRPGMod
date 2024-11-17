@@ -1,5 +1,5 @@
 #include "include_rpg"
-//#include "dyn_scale"
+#include "difficulty_settings"
 #include "scrpg_core"
 
 CClientCommand c_rpgmod_medic( "shockrifle", "", @CVAR_MedicSound );
@@ -88,15 +88,15 @@ void LoadImportantStuff()
 	LoadPlayerModels();
 	LoadRPGCore();
 	
-	//if ( g_DynamicDifficultySystem !is null )
-	//{
-	//	g_DynamicDifficultySystem.Clear();
-	//	@g_DynamicDifficultySystem = null;
-	//}
+	if ( g_DifficultySettings !is null )
+	{
+		g_DifficultySettings.Clear();
+		@g_DifficultySettings = null;
+	}
 	
-	//CDynamicDifficulty dynscale();
-	//@g_DynamicDifficultySystem = @dynscale;
-	//g_Scheduler.SetTimeout( @g_DynamicDifficultySystem, "ScaleCheck", 5.0 );
+	DifficultySettings DifficultySettings();
+	@g_DifficultySettings = @DifficultySettings;
+	g_Scheduler.SetTimeout( @g_DifficultySettings, "DifficultySettingsCheck", 5.0 );
 }
 
 void MapInit()
@@ -104,7 +104,7 @@ void MapInit()
 	LoadImportantStuff();
 	
 	RegisterAllWeapons();
-	//g_DynamicDifficultySystem.Clear();
+	g_DifficultySettings.Clear();
 	g_SCRPGCore.Reset();
 	g_SCRPGCore.CreateThinker();
 	g_SCRPGCore.CheckMapDefines();
@@ -123,7 +123,7 @@ void PluginInit()
 	g_Hooks.RegisterHook( Hooks::Player::PlayerPostThink, @RPGMOD_PlayerPostThink );
 	g_Hooks.RegisterHook( Hooks::Player::ClientSay, @RPGMOD_ClientSay );
 	
-	//DynScale_RegisterHooks();
+	//DifficultySettings_RegisterHooks();
 	
 	//Disable survival mode
 	//g_EngineFuncs.ServerCommand( "mp_survival_mode 0\n" );
