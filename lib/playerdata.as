@@ -72,6 +72,9 @@ class PlayerData
 	bool bIsCommunity = false;
 	bool bIsDonator = false;
 	
+	// Prestige effect toggles
+	bool bExplosiveRounds = false;
+	
 	//These timers will be used if reconnected.
 	void ResetOnJoin()
 	{

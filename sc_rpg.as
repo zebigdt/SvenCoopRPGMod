@@ -45,12 +45,20 @@ void LoadImportantStuff()
 void MapInit()
 {
 	LoadImportantStuff();
-	
 	RegisterAllWeapons();
 	g_DifficultySettings.Clear();
 	g_SCRPGCore.Reset();
-	g_SCRPGCore.CreateThinker();
 	g_SCRPGCore.CheckMapDefines();
+
+	// Precache explosion sprites and sounds - Needs to be done in a function seperately.
+    g_Game.PrecacheModel("sprites/zerogxplode.spr");
+    g_SoundSystem.PrecacheSound("weapons/explode3.wav");
+    g_SoundSystem.PrecacheSound("buttons/lightswitch2.wav");
+    
+    // Gib-related precaches
+    g_Game.PrecacheModel("models/hgibs.mdl");
+    g_SoundSystem.PrecacheSound("common/bodysplat.wav");
+    
 }
 
 void PluginInit()
@@ -58,17 +66,19 @@ void PluginInit()
 	g_Module.ScriptInfo.SetAuthor( "JonnyBoy0719" );
 	g_Module.ScriptInfo.SetContactInfo( "https://twitter.com/JohanEhrendahl" );
 	
-	g_Hooks.RegisterHook( Hooks::Player::PlayerSpawn, @RPGMOD_PlayerSpawn );
-	g_Hooks.RegisterHook( Hooks::Player::PlayerKilled, @RPGMOD_PlayerKilled );
-	g_Hooks.RegisterHook( Hooks::Player::PlayerTakeDamage, @RPGMOD_PlayerTakeDamage );
-	g_Hooks.RegisterHook( Hooks::Player::ClientPutInServer, @RPGMOD_ClientPutInServer );
-	g_Hooks.RegisterHook( Hooks::Player::ClientDisconnect, @RPGMOD_ClientDisconnect );
-	g_Hooks.RegisterHook( Hooks::Player::PlayerPostThink, @RPGMOD_PlayerPostThink );
-	g_Hooks.RegisterHook( Hooks::Player::ClientSay, @RPGMOD_ClientSay );
+	g_Hooks.RegisterHook( Hooks::Player::PlayerSpawn, @PlayerSpawn );
+	g_Hooks.RegisterHook( Hooks::Player::PlayerKilled, @PlayerKilled );
+	g_Hooks.RegisterHook( Hooks::Player::PlayerTakeDamage, @PlayerTakeDamage );
+	g_Hooks.RegisterHook( Hooks::Player::ClientPutInServer, @ClientPutInServer );
+	g_Hooks.RegisterHook( Hooks::Player::ClientDisconnect, @ClientDisconnect );
+	g_Hooks.RegisterHook( Hooks::Player::PlayerPostThink, @PlayerPostThink );
+	g_Hooks.RegisterHook( Hooks::Player::ClientSay, @ClientSay );
 
 	g_Hooks.RegisterHook(Hooks::Weapon::WeaponPrimaryAttack, @OnWeaponPrimaryAttack);
-	g_Hooks.RegisterHook(Hooks::Weapon::WeaponSecondaryAttack, @OnWeaponSecondaryAttack);
+	//g_Hooks.RegisterHook(Hooks::Weapon::WeaponSecondaryAttack, @OnWeaponSecondaryAttack);
 	g_Hooks.RegisterHook(Hooks::Weapon::WeaponTertiaryAttack, @OnWeaponTertiaryAttack);
+
+	g_SCRPGCore.CreateThinker();
 	
 	//DifficultySettings_RegisterHooks();
 	
@@ -78,19 +88,101 @@ void PluginInit()
 	//g_EngineFuncs.ServerCommand( "mp_survival_minplayers 90\n" );
 }
 
-HookReturnCode RPGMOD_PlayerSpawn(CBasePlayer@ pPlayer)
+HookReturnCode OnWeaponTertiaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ pWeapon) 
+{
+    if (pWeapon is null || pPlayer is null)
+        return HOOK_CONTINUE;
+    
+	if(data.iPrestige == 1)
+	{
+ 		// Only handle shotgun tertiary attack
+    	if (pWeapon.GetClassname() == "weapon_shotgun" ) 
+		{
+			string steamId = g_EngineFuncs.GetPlayerAuthId(pPlayer.edict());
+			
+			// Toggle mode
+			data.bExplosiveRounds = !data.bExplosiveRounds;
+			
+			// Notify player of mode change
+			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, 
+				"Explosive rounds: " + data.bExplosiveRounds ? "ENABLED" : "DISABLED") + "\n");
+				
+			// Play toggle sound
+			g_SoundSystem.PlaySound(pPlayer.edict(), CHAN_WEAPON, "buttons/lightswitch2.wav", 1.0f, ATTN_NORM, 0, 100);
+		}
+	}
+   
+    
+    return HOOK_CONTINUE;
+}
+
+HookReturnCode OnWeaponPrimaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ pWeapon) 
+{
+    if (pWeapon is null || pPlayer is null)
+        return HOOK_CONTINUE;
+        
+    // Check if weapon is shotgun
+    if (pWeapon.GetClassname() == "weapon_shotgun" )  
+    {
+        string steamId = g_EngineFuncs.GetPlayerAuthId(pPlayer.edict());
+        
+        // Only create explosion if explosive mode is enabled for this player
+        if (bool(g_ExplosiveMode[steamId])) 
+        {
+            // Get player's view angles and position
+            Vector vecSrc = pPlayer.GetGunPosition();
+            Vector vecAiming = pPlayer.GetAutoaimVector(0.0f);
+            
+            // Create tracer effect for visual feedback
+            NetworkMessage tracers(MSG_BROADCAST, NetworkMessages::SVC_TEMPENTITY);
+            tracers.WriteByte(TE_TRACER);
+            tracers.WriteCoord(vecSrc.x);
+            tracers.WriteCoord(vecSrc.y);
+            tracers.WriteCoord(vecSrc.z);
+            tracers.WriteCoord(vecSrc.x + vecAiming.x * 4096);
+            tracers.WriteCoord(vecSrc.y + vecAiming.y * 4096);
+            tracers.WriteCoord(vecSrc.z + vecAiming.z * 4096);
+            tracers.End();
+            
+            // Create explosion at impact point
+            TraceResult tr;
+            g_Utility.TraceLine(vecSrc, vecSrc + vecAiming * 4096, dont_ignore_monsters, pPlayer.edict(), tr);
+            
+            // Create explosion with enhanced visual effect
+            g_EntityFuncs.CreateExplosion(tr.vecEndPos, Vector(0, 0, 0), null, 100, true);
+            
+            // Apply radius damage with combined damage flags for guaranteed gibbing
+            // DMG_ALWAYSGIB ensures gibbing regardless of damage
+            // DMG_BLAST | DMG_NEVERGIB removed as they could interfere with gibbing
+            g_WeaponFuncs.RadiusDamage(
+                tr.vecEndPos,   //damage position
+                pWeapon.pev,    //inflictor
+                pPlayer.pev,    //attacker
+                2.0f,       //damage amount
+                100.0f,     //radius
+                CLASS_NONE, //classification
+                DMG_ACID //damage type
+            );
+        }
+    }
+    
+    return HOOK_CONTINUE;
+}
+
+
+HookReturnCode PlayerSpawn(CBasePlayer@ pPlayer)
 {
 	g_SCRPGCore.PlayerSpawned( pPlayer );
 	return HOOK_CONTINUE;
 }
 
-HookReturnCode RPGMOD_PlayerKilled( CBasePlayer@ pPlayer, CBaseEntity@ pAttacker, int iGib )
+HookReturnCode PlayerKilled( CBasePlayer@ pPlayer, CBaseEntity@ pAttacker, int iGib )
 {
 	g_Achivements.GiveAchievement( pPlayer, "endyourlife", true );
 	return HOOK_CONTINUE;
 }
 
-HookReturnCode RPGMOD_PlayerTakeDamage( DamageInfo@ pDamageInfo )
+HookReturnCode PlayerTakeDamage( DamageInfo@ pDamageInfo )
 {
 	if ( pDamageInfo.pVictim !is null )
 	{
@@ -101,19 +193,19 @@ HookReturnCode RPGMOD_PlayerTakeDamage( DamageInfo@ pDamageInfo )
 	return HOOK_CONTINUE;
 }
 
-HookReturnCode RPGMOD_ClientPutInServer(CBasePlayer@ pPlayer)
+HookReturnCode ClientPutInServer(CBasePlayer@ pPlayer)
 {
 	g_SCRPGCore.LoadClientData( pPlayer );
 	return HOOK_CONTINUE;
 }
 
-HookReturnCode RPGMOD_ClientDisconnect(CBasePlayer@ pPlayer)
+HookReturnCode ClientDisconnect(CBasePlayer@ pPlayer)
 {
 	g_SCRPGCore.SaveClientData( pPlayer );
 	return HOOK_CONTINUE;
 }
 
-HookReturnCode RPGMOD_PlayerPostThink( CBasePlayer@ pPlayer )
+HookReturnCode PlayerPostThink( CBasePlayer@ pPlayer )
 {
 	if ( pPlayer is null ) return HOOK_CONTINUE;
 	if ( !pPlayer.IsAlive() ) return HOOK_CONTINUE;
@@ -203,23 +295,7 @@ bool IsValidPraise( string input, string val )
 	return false;
 }
 
-bool IsNithil( const CCommand@ args )
-{
-	//I'm Nihilanths slave
-	//Im Nihilanths slave
-	string arg1 = args.Arg(1).ToLowercase();
-	string arg2 = args.Arg(2).ToLowercase();
-	string arg3 = args.Arg(3).ToLowercase();
-	if ( arg1 == "i'm" || arg1 == "im" )
-	{
-		if ( arg2 != "nihilanths" ) return false;
-		if ( arg3 != "slave" ) return false;
-		return true;
-	}
-	return false;
-}
-
-HookReturnCode RPGMOD_ClientSay( SayParameters@ pParams )
+HookReturnCode ClientSay( SayParameters@ pParams )
 {
 	CBasePlayer@ pPlayer = pParams.GetPlayer();
 	if ( pPlayer is null ) return HOOK_CONTINUE;
@@ -252,70 +328,6 @@ HookReturnCode RPGMOD_ClientSay( SayParameters@ pParams )
 		g_SCRPGCore.DoSoundEffect( pPlayer, false );
 		return HOOK_HANDLED;
 	}
-	
-	// Secret stuff
-	if ( IsValidMenu( args.Arg(0), "praise" ) )
-	{
-		string arg1 = args.Arg(1);
-		if ( IsValidPraise( arg1, "slave" ) )
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Once a slave, always a slave.\n");
-		else if ( IsValidPraise( arg1, "nihilanth" ) )
-		{
-			string szMsg;
-			switch( Math.RandomLong( 0, 1 ) )
-			{
-				case 0: szMsg = "- .... .  .- -. ... .-- . .-.	.. ...	.-- .. - .... .. -.	-.-- --- ..- .-.	--. .-. .- ... .--. --··--	 ..-. .. -. -..	 - .... .	--- -. .	-.-- --- ..-	... . . -.-	.-- .. - ....	- .... . .. .-.	. -..- .. ... - . -. -.-. .	.. -. - .- -.-. -"; break;
-				case 1: szMsg = ". -..- .. ... - . -. -.-. . --··--	.. ...	 -- -.-- - .... ·-·-·-	 - .... .	-- -.-- - ....	 .. ...	 . -..- .. ... - . -. -.-. . ·-·-·-  -.-- . -	-... --- - ....	-.-. .- -. -. --- -	. -..- .. ... -	.. ..-.	-. --- - .... .. -. --.	.. ...	.-. . .- .-.. ·-·-·-"; break;
-			}
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, szMsg + "\n");
-		}
-		else if ( IsValidPraise( arg1, "truth" ) )
-		{
-			string szMsg;
-			switch( Math.RandomLong( 0, 1 ) )
-			{
-				case 0: szMsg = "..	... . .	- .... .	- .-. ..- - .... --··--	-... ..- -	..	 ... - .. .-.. .-..	 -.-. .- -. ·----· -	.-. . .- -.-. ....	.. -"; break;
-				case 1: szMsg = "..	-.-. .- -. -. --- -	..-. .. -. -..	 - .... .	. -..- .. ... - . -. -.-. .	..	 -. . . -.."; break;
-			}
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, szMsg + "\n");
-		}
-		else if ( IsValidPraise( arg1, "real" ) )
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "..	.- --	- .... .	... .-.. .- ...- .	 --- ..-.	-. .. .... .. .-.. .- -. - ....\n");
-		else if ( IsValidPraise( arg1, "exist" ) || IsValidPraise( arg1, "existence" ) )
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, ".. ·----· --	 -. .. .... .. .-.. .- -. - .... ·----· ...	 ... .-.. .- ...- . -·-·--\n");
-		else if ( IsNithil( args ) )
-			g_SCRPGCore.DoSecret( pPlayer, "secret1" );
-		else
-		{
-			string szMsg;
-			switch( Math.RandomLong( 0, 6 ) )
-			{
-				case 0: szMsg = "The truth. Hidden, beneath the old. By seeking thy code, your salvation will be within your grasp."; break;
-				case 1: szMsg = "One who sees, will open the gates, for thy who cannot."; break;
-				case 2: szMsg = "The Old. The New. The Future. All the same, but you, you see only black."; break;
-				case 3: szMsg = "Obey the unknown, for he is your new salvation."; break;
-				case 4: szMsg = "Alone. Decived. Thy who demand, will not. Thy who shall, will. Hidden, but not gone. Forgotten is what he is."; break;
-				case 5: szMsg = "Thy slave, must do as told. If not, thy shall never see blessing."; break;
-				case 6: szMsg = "The path to salvation, is thy sentence of existence. You may not need to use thy givings to bring you salvation."; break;
-			}
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, szMsg + "\n");
-		}
-		
-		string szSound;
-		switch( Math.RandomLong( 0, 3 ) )
-		{
-			case 0: szSound = "nihilanth/nil_deceive.wav"; break;
-			case 1: szSound = "nihilanth/nil_alone.wav"; break;
-			case 2: szSound = "nihilanth/nil_thetruth.wav"; break;
-			case 3: szSound = "nihilanth/nil_man_notman.wav"; break;
-		}
-		g_SCRPGCore.ClientSidedSound( pPlayer, szSound );
-		return HOOK_HANDLED;
-	}
-	else if ( IsValidMenu( args.Arg(0), "postal" ) )
-	{
-		g_SCRPGCore.DoSecret( pPlayer, "secret_postal" );
-		return HOOK_HANDLED;
-	}
+
 	return HOOK_CONTINUE;
 }

@@ -9,7 +9,6 @@
 //#include "weapons/weapon_stormgiant"
 //#include "weapons/weapon_saber"
 //#include "weapons/weapon_usp45akimbo"
-#include "weapons/weapon_shotgunexplosive"
 
 #include "lib/giftfromthegods"
 //#include "lib/weaponshop" //Not yet written
@@ -28,7 +27,6 @@ void RegisterAllWeapons()
 	//Registerweapon_stormgiant();
 	//RegisterWeapon_Saber();
 	//RegisterWeapon_usp45akimbo5();
-	RegisterWeapon_shotgunexplosive();
 
 		//Custom Ammo Register
 	//RegisterAmmoCrystals();
