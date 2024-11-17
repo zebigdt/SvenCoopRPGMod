@@ -25,7 +25,7 @@ TBD
 
 Credits
 -----------
-`ZebigD` - Programming, testing.
+`zebigdt` - Programming, testing.
 `Chaotic Akantor` - Misc Programming, balance and testing.
 
 `JonnyBoy0719` - Programming of original version.
