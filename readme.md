@@ -8,8 +8,8 @@ This is provided **as is**.
 Skills
 -----------
 
-`Maximum Health` - Increases your Maximum Health, in % per point (Scales with map settings).
-`Maximum Armor` - Increases your Maximum Health, in % per point (Scales with map settings).
+`Maximum Health` - Increases your Maximum Health per point (Scales with map settings).
+`Maximum Armor` - Increases your Maximum Health per point (Scales with map settings).
 `HP Regeneration` - Regenerates HP at a percentage of your Maximum Health after not taking damage for a time. Increases % healed per point and also slightly reduces damage recovery delay (can stack).
 `AP Regeneration` - Regenerates AP at a percentage of your Maximum Armor after not taking damage for a time. Increases % healed per point and also slightly reduces damage recovery delay (can stack).
 `Ammo Regeneration` - Regenerates small amounts of ammunition of all types, every 10 seconds. Reduces the timer for recovery slightly and also increase the amount of ammo gained, per point.
