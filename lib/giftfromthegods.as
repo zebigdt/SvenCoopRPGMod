@@ -18,7 +18,7 @@ namespace GiftFromTheGods
 	// Just give the player some random ammo
 	final class AmmoDrop
 	{
-		private int AMMO_REGEN_DIFFICULTY = 5; // Should be between 1 to 10
+		private int AMMO_REGEN_DIFFICULTY = 15;
 
 		private array<string> m_BasicAmmoTypes = {
 			"9mm",
@@ -107,7 +107,6 @@ namespace GiftFromTheGods
 							//int amountToGive = (2 * BASIC_AMMO_SCALING_FACTOR * int(log10(iStat_ammoregen + 1)))/maxPrimaryAmmo;
 							if(AMMO_REGEN_DIFFICULTY <= 0) AMMO_REGEN_DIFFICULTY = 10;
 							float ammoToGive = (maxPrimaryAmmo * log(iStat_ammoregen + 1))/AMMO_REGEN_DIFFICULTY;
-							g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, ammoToGive);
 							pPlayer.GiveAmmo(int(ammoToGive), primaryAmmo, maxPrimaryAmmo);
 							givenAmmoTypeMap[primaryAmmo] = true;
 						}
