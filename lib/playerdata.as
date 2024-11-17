@@ -9,28 +9,27 @@ class PlayerData
 	string szSteamID;
 	
 	// Player stats
-	int iLevel = 0;						// Our levelz
-	int iPoints = 0;					// Our points
-	int iPrestige = 0;					// Our prestige
-	int iSouls = 0;						// Money
-	int iStat_health = 0;				// Vitality
+	int iLevel = 0;						// Level
+	int iPoints = 0;					// Skill Points
+	int iPrestige = 0;					// Prestige
+	int iSouls = 0;						// Money (Unused)
+	int iStat_health = 0;				// Vitality (Max Health)
 	int iStat_health_regen = 0;			// Health Regeneration
-	int iStat_armor = 0;				// Superior Armor
-	int iStat_armor_regen = 0;			// Nano Armor
-	int iStat_gotg_ammo = 0;			// The Magic Pocket
-	int iStat_gotg_weapon = 0;			// A Gift From The Gods
-	int iStat_doublejump = 0;			// Icarus Potion
-	int iStat_battlecry = 0;			// The Warrior's Battlecry
-	int iStat_holyarmor = 0;			// Holy Armor
+	int iStat_armor = 0;				// Superior Armor (Max Armor)
+	int iStat_armor_regen = 0;			// Nano Armor (Armor Regeneration)
+	int iStat_ammoregen = 0;			// The Magic Pocket (Ammo Resupply)
+	int iStat_explosiveregen = 0;			// A Gift From The Gods (Explosives Resupply)
+	int iStat_doublejump = 0;			// Icarus Potion (Extra Jumps)
+	int iStat_firstaid = 0;			// The Warrior's Battlecry (Heal Aura)
+	int iStat_shockrifle = 0;			// Holy Armor (Shock Roach)
 	
-	int iDoubleJump = 0;				// Our double jump value
+	int iDoubleJump = 0;				// Extra Jumps value
 	
-	float flScore = 0.0;				// Our current score
+	int iScore = 0;						// Score
+	int iExp = 0;						// EXP
+	int iExpMax = 0;					// Max EXP
 	
-	int iExp = 0;						// Our EXP
-	int iExpMax = 0;					// Our max EXP
-	
-	int iMedals = 0;
+	int iMedals = 0;					// Medals - Unused
 	
 	string szModel = "null";			// Our model
 	string szModelSpecial = "null";		// Special model (only the player can pick this)
@@ -38,21 +37,30 @@ class PlayerData
 	// Weekly stuff
 	int iWeekly_Exp = 0;				// Special Weekly EXP bonus
 	int iWeekly_Exp_Max = 0;			// Max CAP for Special Weekly EXP bonus
+
+	//Community Member Bonus XP
+	int iCommunityEXP = 0;
 	
-	// Wait 120 seconds to obtain free EXP
-	int iWaitTimer_FreeEXP = 120;
+	//First Load Initialise
+	int iWaitTimer_FreeEXP = 600;		// Free XP Timer
 	int iWaitTimer_Hurt = 0;
 	int iWaitTimer_Hurt_Snd = 0;		// We don't want to spam this
 	int iWaitTimer_SndEffect = 0;		// We don't want to spam this
 	int iWaitTimer_UseModel = 3;
-	int iWaitTimer_AmmoDrop = 1;		// At the start let's give some ammo
-	int iWaitTimer_WeaponDrop = 1;		// Ditto, same for weapon
+	int iWaitTimer_AmmoDrop = 5;		// First Ammo Resupply
+	int iWaitTimer_WeaponDrop = 10;	// First Explosive Drop
+
 	int iWaitTimer_HolyArmor = 0;
-	int iWaitTimer_HolyArmor_Max = 10;
+	int iWaitTimer_HolyArmor_Max = 10;	// Super Weapon Cooldown
 	int iWaitTimer_HolyArmor_Reset = -1;
 	int iWaitTimer_BattleCry = 0;
-	int iWaitTimer_BattleCry_Max = 10;
+	int iWaitTimer_BattleCry_Max = 5;	// Heal Aura Cooldown
 	int iWaitTimer_BattleCry_Reset = -1;
+
+	int iDisplayTimer_Aura = iWaitTimer_BattleCry_Max;
+	int iDisplayTimer_SuperWeapon = iWaitTimer_HolyArmor_Max;
+	int iDisplayTimer_AmmoDrop = iWaitTimer_AmmoDrop;
+	int iDisplayTimer_WeaponDrop = iWaitTimer_WeaponDrop;
 	
 	float flWaitTimer_SndEffect_Delay = 0;
 	
@@ -68,6 +76,7 @@ class PlayerData
 	bool bIsCommunity = false;
 	bool bIsDonator = false;
 	
+	//These timers will be used if reconnected.
 	void ResetOnJoin()
 	{
 		bIsHurt = false;
@@ -81,19 +90,19 @@ class PlayerData
 		
 		flWaitTimer_SndEffect_Delay = 0;
 		
-		iWaitTimer_FreeEXP = 120;
+		iWaitTimer_FreeEXP = 300;
 		iWaitTimer_Hurt = 0;
 		iWaitTimer_Hurt_Snd = 0;
 		iWaitTimer_SndEffect = 0;
 		iWaitTimer_UseModel = 3;
-		iWaitTimer_AmmoDrop = 1;
-		iWaitTimer_WeaponDrop = 1;
-		iWaitTimer_HolyArmor = 0;
-		iWaitTimer_HolyArmor_Max = 10;
-		iWaitTimer_HolyArmor_Reset = -1;
-		iWaitTimer_BattleCry = 0;
-		iWaitTimer_BattleCry_Max = 10;
-		iWaitTimer_BattleCry_Reset = -1;
+		//iWaitTimer_AmmoDrop = 90;
+		//iWaitTimer_WeaponDrop = 300;
+		//iWaitTimer_HolyArmor = 0;
+		//iWaitTimer_HolyArmor_Max = 300;
+		//iWaitTimer_HolyArmor_Reset = -1;
+		//iWaitTimer_BattleCry = 0;
+		//iWaitTimer_BattleCry_Max = 120;
+		//iWaitTimer_BattleCry_Reset = -1;
 		
 		iWeekly_Exp = 0;
 		iWeekly_Exp_Max = 0;

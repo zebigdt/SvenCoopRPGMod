@@ -6,11 +6,11 @@ namespace Menu
 		SKILL_ARMOR,
 		SKILL_HEALTH_REGEN,
 		SKILL_ARMOR_REGEN,
-		SKILL_GOTG_AMMO,
-		SKILL_GOTG_WEAPON,
+		SKILL_AMMOREGEN,
+		SKILL_EXPLOSIVEREGEN,
 		SKILL_DOUBLEJUMP,
-		SKILL_BATTLECRY,
-		SKILL_HOLYARMOR
+		SKILL_FIRSTAID,
+		SKILL_SHOCKRIFLE
 	};
 	
 	final class CPlayerSkill
@@ -35,13 +35,13 @@ namespace Menu
 				case SKILL_ARMOR: iPoints = data.iStat_armor; break;
 				case SKILL_HEALTH_REGEN: iPoints = data.iStat_health_regen; break;
 				case SKILL_ARMOR_REGEN: iPoints = data.iStat_armor_regen; break;
-				case SKILL_GOTG_AMMO: iPoints = data.iStat_gotg_ammo; break;
-				case SKILL_GOTG_WEAPON: iPoints = data.iStat_gotg_weapon; break;
+				case SKILL_AMMOREGEN: iPoints = data.iStat_ammoregen; break;
+				case SKILL_EXPLOSIVEREGEN: iPoints = data.iStat_explosiveregen; break;
 				case SKILL_DOUBLEJUMP: iPoints = data.iStat_doublejump; break;
-				case SKILL_BATTLECRY: iPoints = data.iStat_battlecry; break;
-				case SKILL_HOLYARMOR: iPoints = data.iStat_holyarmor; break;
+				case SKILL_FIRSTAID: iPoints = data.iStat_firstaid; break;
+				case SKILL_SHOCKRIFLE: iPoints = data.iStat_shockrifle; break;
 			}
-			return m_szName + "  [ " + iPoints + " / " + m_iMaxValue + " ]";
+			return m_szName + " - [" + iPoints + "/" + m_iMaxValue + "]";
 		}
 		
 		private int GetSpentAmount( int input, int value )
@@ -68,22 +68,22 @@ namespace Menu
 				case SKILL_ARMOR: iPoints = data.iStat_armor; break;
 				case SKILL_HEALTH_REGEN: iPoints = data.iStat_health_regen; break;
 				case SKILL_ARMOR_REGEN: iPoints = data.iStat_armor_regen; break;
-				case SKILL_GOTG_AMMO: iPoints = data.iStat_gotg_ammo; break;
-				case SKILL_GOTG_WEAPON: iPoints = data.iStat_gotg_weapon; break;
+				case SKILL_AMMOREGEN: iPoints = data.iStat_ammoregen; break;
+				case SKILL_EXPLOSIVEREGEN: iPoints = data.iStat_explosiveregen; break;
 				case SKILL_DOUBLEJUMP: iPoints = data.iStat_doublejump; break;
-				case SKILL_BATTLECRY: iPoints = data.iStat_battlecry; break;
-				case SKILL_HOLYARMOR: iPoints = data.iStat_holyarmor; break;
+				case SKILL_FIRSTAID: iPoints = data.iStat_firstaid; break;
+				case SKILL_SHOCKRIFLE: iPoints = data.iStat_shockrifle; break;
 			}
 			
 			if ( data.iPoints <= 0 )
 			{
-				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] You need skillpoints for enhancing '" + m_szName + "'!\n");
+				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] Not enough skillpoints to increase " + m_szName + "!\n");
 				return;
 			}
 			
 			if( iPoints >= m_iMaxValue )
 			{
-				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] You have already mastered '" + m_szName + "'.\n");
+				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] " + m_szName + "Is already at max!\n");
 				if ( data.iPoints > 0 )
 					data.bReopenSkills = true;
 			}
@@ -108,16 +108,16 @@ namespace Menu
 					case SKILL_ARMOR: data.iStat_armor = iPoints; break;
 					case SKILL_HEALTH_REGEN: data.iStat_health_regen = iPoints; break;
 					case SKILL_ARMOR_REGEN: data.iStat_armor_regen = iPoints; break;
-					case SKILL_GOTG_AMMO: data.iStat_gotg_ammo = iPoints; break;
-					case SKILL_GOTG_WEAPON: data.iStat_gotg_weapon = iPoints; break;
+					case SKILL_AMMOREGEN: data.iStat_ammoregen = iPoints; break;
+					case SKILL_EXPLOSIVEREGEN: data.iStat_explosiveregen = iPoints; break;
 					case SKILL_DOUBLEJUMP: data.iStat_doublejump = iPoints; break;
-					case SKILL_BATTLECRY: data.iStat_battlecry = iPoints; break;
-					case SKILL_HOLYARMOR: data.iStat_holyarmor = iPoints; break;
+					case SKILL_FIRSTAID: data.iStat_firstaid = iPoints; break;
+					case SKILL_SHOCKRIFLE: data.iStat_shockrifle = iPoints; break;
 				}
 				
 				// Make sure to update it
 				g_SCRPGCore.SetMaxArmorHealth( pPlayer, data );
-				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] You enhanced '" + m_szName + "' to Level " + iPoints + "\n");
+				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "[RPG MOD] Increased " + m_szName + " to Level " + iPoints + "\n");
 				if ( data.iPoints > 0 )
 					data.bReopenSkills = true;
 			}
@@ -174,9 +174,9 @@ namespace Menu
 			@m_pMenu = CTextMenu( TextMenuPlayerSlotCallback( this.Callback ) );
 			
 			if ( iSpendChoice > 1 )
-				m_pMenu.SetTitle( "Select Skills - Enhance amount (" + iAvailablePoints + "):" );
+				m_pMenu.SetTitle( "Select Skills - Increase amount (" + iAvailablePoints + "):" );
 			else
-				m_pMenu.SetTitle( "Select Skills - Skillpoints available: " + iAvailablePoints );
+				m_pMenu.SetTitle( "Select Skills - Skillpoints: " + iAvailablePoints );
 			
 			for( uint uiIndex = 0; uiIndex < m_Items.length(); ++uiIndex )
 			{
@@ -270,7 +270,7 @@ namespace Menu
 			
 			@m_pMenu = CTextMenu( TextMenuPlayerSlotCallback( this.Callback ) );
 			
-			m_pMenu.SetTitle( "Increment your skill with" );
+			m_pMenu.SetTitle( "Increase skill by" );
 			
 			for( uint uiIndex = 0; uiIndex < m_Items.length(); ++uiIndex )
 			{

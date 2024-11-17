@@ -159,8 +159,8 @@ class weapon_saber : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 
 	void PrimaryAttack()
 	{
-		float flFireRate = 1.16f;
-		SetWeaponDamage( 200 );
+		float flFireRate = 0.8f;
+		SetWeaponDamage( 60 );
 
 		// Shoot
 		// >> Animation (if more than 0 in clip)
@@ -193,8 +193,8 @@ class weapon_saber : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 
 	void SecondaryAttack()
 	{
-		float flFireRate = 1.16f;
-		SetWeaponDamage( 80 );
+		float flFireRate = 0.5f;
+		SetWeaponDamage( 30 );
 
 		// Shoot
 		// >> Animation (if more than 0 in clip)
@@ -204,7 +204,7 @@ class weapon_saber : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 		// >> Firerate
 		Attack_Melee( 0, ANIM_SABER_STAB, 40, 0, flFireRate, false );
 
-		g_Scheduler.SetTimeout( @this, "SecondarySwingAttack", 0.35 );
+		g_Scheduler.SetTimeout( @this, "SecondarySwingAttack", 0.30 );
 
 		// Play sound
 		g_SoundSystem.EmitSoundDyn( self.pev.owner, CHAN_WEAPON, "afterlife/saber/stab.wav", Math.RandomFloat( 0.95, 1.0 ), ATTN_NORM, 0, 93 + Math.RandomLong( 0, 0xf ) );

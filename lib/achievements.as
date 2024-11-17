@@ -157,23 +157,23 @@ namespace Populate
 		if ( !g_Achivements.ShouldAddItems() ) return;
 		
 		// szID, szName, iMedals, iExperience, iMoney, bSecret
-		g_Achivements.AddItem( CAchievement( "prestige_1", "Prestige Time!", "Prestige for the first time", 1, 500, 25 ) );
-		g_Achivements.AddItem( CAchievement( "prestige_5", "Look at me go!", "Prestige 5 times", 2, 9500, 150 ) );
-		g_Achivements.AddItem( CAchievement( "prestige_lj", "LongJump Module", "Gotta get that long jump module!", 2, 800, 80 ) );
-		g_Achivements.AddItem( CAchievement( "teamplayer", "Team Player", "Boost the whole team's HP & AP", 3, 2500, 200 ) );
-		g_Achivements.AddItem( CAchievement( "godsdoing", "I HAVE THE POWER!!", "Become god", 1, 3600, 350, 10 ) );
-		g_Achivements.AddItem( CAchievement( "secret1", "Praise The Alien Overlord!", "What even is this", 15, 9800, 5000, 1, true ) );
-		g_Achivements.AddItem( CAchievement( "secret2", "I'm dying over here!", "If it bleeds, you can heal it", 3, 1250, 250, 1, true ) );
-		g_Achivements.AddItem( CAchievement( "secret_postal", "Going POSTAL", "Just sign my petition god dammit", 20, 52500, 2025, 1, true ) );
-		g_Achivements.AddItem( CAchievement( "extreme_uboa", "UBOA!?!", "( ﾟДﾟ) TOO EXTREME!! (´･ω･)", 2, 8000, 500 ) );
-		g_Achivements.AddItem( CAchievement( "endyourlife", "Depressed", "Just end it all..", 5, 1, 10 ) );
-		g_Achivements.AddItem( CAchievement( "warriorinside", "I'm one with the warrior inside", "Use warrior's battlecry!", 3, 15250, 1525, 10 ) );
-		g_Achivements.AddItem( CAchievement( "ethereal", "Weaponized death!", "Empowered by crystalized essence of the dead!", 5, 5900, 5900 ) );
-		g_Achivements.AddItem( CAchievement( "plasmarifle", "Crystal Meth", "These liquidized Afterlife crystal are really potent!", 15, 1885900, 5825 ) );
-		g_Achivements.AddItem( CAchievement( "scinade", "I seem to be wounded!", "But I can keep going!", 5, 10500, 2625 ) );
-		g_Achivements.AddItem( CAchievement( "martialarts", "Martial Arts", "最後の侍。", 10, 85900, 565 ) );
-		g_Achivements.AddItem( CAchievement( "fotn", "WATAA", "Serious fisting", 5, 285900, 25 ) );
-		g_Achivements.AddItem( CAchievement( "runeblade", "By the power of grayskull..", "-I have the poooower!", 15, 1885900, 1885900 ) );
+		g_Achivements.AddItem( CAchievement( "prestige_1", "Prestige Time!", "Prestige for the first time", 0, 100, 0 ) );
+		g_Achivements.AddItem( CAchievement( "prestige_5", "Look at me go!", "Prestige 5 times", 0, 500, 0 ) );
+		g_Achivements.AddItem( CAchievement( "prestige_lj", "LongJump Module", "Gotta get that long jump module!", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "teamplayer", "Team Player", "Boost the whole team's HP & AP", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "godsdoing", "I HAVE THE POWER!!", "Become god", 0, 1000, 0 ) );
+		g_Achivements.AddItem( CAchievement( "secret1", "Praise The Alien Overlord!", "What even is this", 0, 100, 0, 1, true ) );
+		g_Achivements.AddItem( CAchievement( "secret2", "I'm dying over here!", "If it bleeds, you can heal it", 0, 50, 0, 1, true ) );
+		g_Achivements.AddItem( CAchievement( "secret_postal", "Going POSTAL", "Just sign my petition god dammit", 0, 50, 0, 1, true ) );
+		g_Achivements.AddItem( CAchievement( "extreme_uboa", "UBOA!?!", "( ﾟДﾟ) TOO EXTREME!! (´･ω･)", 0, 50, 0 ) );
+		g_Achivements.AddItem( CAchievement( "endyourlife", "Depressed", "Just end it all..", 0, 10, 0 ) );
+		g_Achivements.AddItem( CAchievement( "warriorinside", "I'm one with the warrior inside", "Use warrior's battlecry!", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "ethereal", "Weaponized death!", "Empowered by crystalized essence of the dead!", 0, 10, 0 ) );
+		g_Achivements.AddItem( CAchievement( "plasmarifle", "Crystal Meth", "These liquidized Afterlife crystal are really potent!", 0, 10, 0 ) );
+		g_Achivements.AddItem( CAchievement( "scinade", "I seem to be wounded!", "But I can keep going!", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "martialarts", "Martial Arts", "最後の侍。", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "fotn", "WATAA", "Serious fisting", 0, 25, 0 ) );
+		g_Achivements.AddItem( CAchievement( "runeblade", "By the power of grayskull..", "-I have the poooower!", 0, 1000, 0 ) );
 	//	g_Achivements.AddItem( CAchievement( "xxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", 5, 8500, 25 ) );
 	}
 }

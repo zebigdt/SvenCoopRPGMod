@@ -16,27 +16,26 @@ namespace GiftFromTheGods
 	}
 	
 	// Just give the player some random ammo
-	// The higher the level, the more ammo they get
 	final class AmmoDrop
 	{
 		private array<string> m_AmmoDrop = {
-			"afterlife_crystals",
+			"9mm",
 			"buckshot",
-			"health",
+			"357",
 			"556",
 			"m40a1",
-			"357",
-			"9mm",
+			"bolts",
 			"shock charges",
 			"sporeclip",
+			"hornets",
 			"uranium",
 			"rockets",
-			"bolts",
 			"trip mine",
 			"satchel charge",
 			"hand grenade",
-			"snarks",
-			"hornets"
+			"ARgrenades",
+			"snarks"
+			//"afterlife_crystals", Removed
 		};
 		
 		private array<CAmmoDrop@> m_Items;
@@ -57,7 +56,7 @@ namespace GiftFromTheGods
 			
 			m_Items.insertLast( pItem );
 		}
-		
+
 		private string GiveAmmoToActiveWeapon( string classname )
 		{
 			for ( uint i = 0; i < m_Items.length(); i++ )
@@ -69,24 +68,112 @@ namespace GiftFromTheGods
 			}
 			return "9mm";
 		}
-		
-		void GiveDrop( CBasePlayer@ pPlayer, int iDropLevel )
+
+		void GiveDrop(CBasePlayer@ pPlayer, int iStat_ammoregen) 
+		{
+			if (pPlayer is null) return;
+
+			dictionary gaveAmmoTypeMap;
+
+			// Initialize the map to track ammo types already given
+			for (uint i = 0; i < m_AmmoDrop.length(); i++)
+			{
+				gaveAmmoTypeMap[m_AmmoDrop[i]] = false;
+			}
+
+
+			// Iterate through the player's weapon inventory
+			for (uint i = 0; i < MAX_ITEM_TYPES; i++) // MAX_ITEM_TYPES is the max number of weapon slots
+			{
+				CBasePlayerItem@ pItem = pPlayer.m_rgpPlayerItems(i); // Get the weapon in slot i
+
+				if (pItem !is null)
+				{
+					CBasePlayerWeapon@ pWeapon = cast<CBasePlayerWeapon@>(pItem); // Cast to weapon type
+					if (pWeapon !is null)
+					{
+						string primaryAmmo = pWeapon.pszAmmo1(); // Weapon's primary ammo type
+						string secondaryAmmo = pWeapon.pszAmmo2(); // Weapon's secondary ammo type
+						int maxAmmo1 = pPlayer.GetMaxAmmo(primaryAmmo); // Get max ammo for primary ammo type
+						int maxAmmo2 = pPlayer.GetMaxAmmo(secondaryAmmo); // Get max ammo for secondary ammo type
+
+						// Give primary ammo if valid not already given
+						if (primaryAmmo != "" && !bool(gaveAmmoTypeMap[primaryAmmo]))
+						{
+							pPlayer.GiveAmmo(int(Math.Ceil(iStat_ammoregen * 0.9)), primaryAmmo, maxAmmo1);
+							gaveAmmoTypeMap[primaryAmmo] = true;
+						}
+
+						// Give secondary ammo if valid
+						if (secondaryAmmo != "")
+						{
+							pPlayer.GiveAmmo(1, secondaryAmmo, maxAmmo2);
+						}
+					}
+				}
+			}
+		}
+
+		// void GiveAmmoForWeapon(CBasePlayer@ pPlayer, const string& in weaponName, int iDropLevel)
+		// {
+		// 	if (weaponName == "weapon_9mmhandgun" || weaponName == "weapon_mp5")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 1.4) + 1, "9mm", 250);
+		// 	}
+		// 	else if (weaponName == "weapon_shotgun")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.7) + 1, "buckshot", 125);
+		// 	}
+		// 	else if (weaponName == "weapon_357" || weaponName == "weapon_eagle" )
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.5) + 1, "357", 36);
+		// 	}
+		// 	else if (weaponName == "weapon_m16" || weaponName == "weapon_saw" )
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 1.1) + 1, "556", 600);
+		// 	}
+		// 	else if (weaponName == "weapon_crossbow")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.4) + 1, "bolts", 50);
+		// 	}
+		// 	else if (weaponName == "weapon_gauss" || weaponName == "weapon_egon")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.4) + 1, "uranium", 100);
+		// 	}
+		// 	else if (weaponName == "weapon_shockrifle")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.9) + 1, "shock charges", 100);
+		// 	}
+		// 	else if (weaponName == "weapon_hornetgun")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.9) + 1, "hornets", 100);
+		// 	}
+		// 	else if (weaponName == "weapon_sporelauncher")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.1) + 1, "sporeclip", 30);
+		// 	}
+		// 	else if (weaponName == "weapon_snark")
+		// 	{
+		// 		pPlayer.GiveAmmo(int(iDropLevel * 0.1) + 1, "snarks", 15, true);
+		// 	}
+		// }
+	
+		void GiveDropExplosive( CBasePlayer@ pPlayer, int iDropLevel ) //New void that I added to seperate explosive regen from normal
 		{
 			if ( pPlayer is null ) return;
-			int iClamp = iDropLevel;
-			if ( iClamp > 10 )
-				iClamp = 10;
-			int iRandomAmount = Math.RandomLong( 0, 3 + iClamp );
-			for ( int i = 0; i < iRandomAmount; i++ )
-				pPlayer.GiveAmmo( Math.RandomLong( 20, 40 + iDropLevel ), m_AmmoDrop[ Math.RandomLong( 0, m_AmmoDrop.length() - 1 ) ], 999 );
-			
-			// Give ammo for the current weapon
-			CBasePlayerWeapon@ activeWeapon = cast<CBasePlayerWeapon@>(pPlayer.m_hActiveItem.GetEntity());
-			if ( activeWeapon is null ) return;
-			pPlayer.GiveAmmo( Math.RandomLong( 20, 40 + iDropLevel ), GiveAmmoToActiveWeapon( activeWeapon.GetClassname() ), 999 );
+
+			//Give ammo for Explosives.
+			pPlayer.GiveAmmo( 2 ,"ARgrenades", 10 );
+			pPlayer.GiveAmmo( 1 ,"hand grenade", 10, true );
+			pPlayer.GiveAmmo( 1 ,"rockets", 10 );
+			pPlayer.GiveAmmo( 1 ,"trip mine", 5, true );
+			pPlayer.GiveAmmo( 1 ,"satchel charge", 5, true );
+
+			//if ( pPlayer.HasPlayerItem( "weapon_tripmine", false ) )
+			//	GiveToPlayer::GiveWeapon( pPlayer, "weapon_tripmine" );
 		}
 	}
-	
+
 	enum WeaponRarity
 	{
 		Rarity_Common = 0,
@@ -121,8 +208,8 @@ namespace GiftFromTheGods
 				case Rarity_UnCommon: output = 0.8; break;
 				case Rarity_Rare: output = 0.25; break;
 				case Rarity_SuperRare: output = 0.15; break;
-				case Rarity_Legendary: output = 0.01; break;
-				case Rarity_Mythical: output = 0.001; break;
+				case Rarity_Legendary: output = 0.05; break; //Was 0.01
+				case Rarity_Mythical: output = 0.02; break; //Was 0.001
 			}
 			return output;
 		}
@@ -164,10 +251,10 @@ namespace GiftFromTheGods
 			if ( bAnnounceAll )
 			{
 				string szNick = pPlayer.pev.netname;
-				g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, szNick + " has been gifted with " + m_szName + ", with is " + szRarity + "!\n");
+				g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, szNick + " has been supplied with " + m_szName + ", with is " + szRarity + "!\n");
 			}
 			else
-				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "The gods have gifted you the " + m_szName + ", which is " + szRarity + "!\n");
+				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "You have been supplied with " + m_szName + ", which is " + szRarity + "!\n");
 			
 			pPlayer.GiveNamedItem( m_szClassname );
 			
@@ -230,6 +317,7 @@ namespace GiftFromTheGods
 		{
 			CWeaponDrop@ weapon = GetRandomDrop( iDropLevel );
 			if ( weapon is null ) return;
+
 			weapon.ObtainWeapon( pPlayer );
 		}
 	}

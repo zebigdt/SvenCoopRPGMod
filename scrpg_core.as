@@ -2,6 +2,7 @@
 bool g_MapDefined_MeleeOnly = false;
 bool g_AuraIsActive = false;
 int g_iWeeklyBonusEXP = 0;
+int g_AllBonusEXP = 0;
 
 // Load achievements
 #include "lib/achievements"
@@ -34,30 +35,37 @@ GiftFromTheGods::WeaponDrop g_WeaponDrop;
 // End
 
 // Our max values
-const int MAX_LEVEL = 800;
-const int MAX_PRESTIGE = 10;
+const int AB_HEALTH_MAX = 10; //Default 400
+const int AB_ARMOR_MAX = 10; //Default 210
+const int AB_HEALTH_REGEN_MAX = 10; //Default 50
+const int AB_ARMOR_REGEN_MAX = 10; //Default 55
+const int AB_AMMO_MAX = 10; //Default 30
+const int AB_WEAPON_MAX = 10; //Default 10
+const int AB_DOUBLEJUMP_MAX = 1; //Default 5
+const int AB_AURA_MAX = 10; //Default 20
+const int AB_HOLYGUARD_MAX = 10; //Default 20
 
-const int AB_HEALTH_MAX = 400;
-const int AB_ARMOR_MAX = 210;
-const int AB_HEALTH_REGEN_MAX = 50;
-const int AB_ARMOR_REGEN_MAX = 55;
-const int AB_AMMO_MAX = 30;
-const int AB_DOUBLEJUMP_MAX = 5;
-const int AB_WEAPON_MAX = 10;
-const int AB_AURA_MAX = 20;
-const int AB_HOLYGUARD_MAX = 20;
+const int MAX_LEVEL = AB_HEALTH_MAX + AB_ARMOR_MAX + AB_HEALTH_REGEN_MAX + AB_ARMOR_REGEN_MAX + AB_AMMO_MAX + AB_WEAPON_MAX + AB_DOUBLEJUMP_MAX + AB_AURA_MAX + AB_HOLYGUARD_MAX; //MUST ADD UP TO SKILL TOTAL
+const int MAX_PRESTIGE = 10; //Default 10
 
-const string SND_LVLUP = "sc_rpg/levelup.wav";
-const string SND_LVLUP_800 = "sc_rpg/levelup_last.wav";
-const string SND_PRESTIGE = "sc_rpg/prestige.wav";
-const string SND_READY = "sc_rpg/ready.wav";
-const string SND_AURA01 = "sc_rpg/bttlcry01.wav";
-const string SND_AURA02 = "sc_rpg/bttlcry02.wav";
-const string SND_AURA03 = "sc_rpg/bttlcry03.wav";
-const string SND_HOLYGUARD = "sc_rpg/harmor.wav";
-const string SND_HOLYWEP = "sc_rpg/wepdrop.wav";
-const string SND_JUMP = "sc_rpg/jump.wav";
-const string SND_JUMP_LAND = "sc_rpg/jump_land.wav";
+//Unused
+int SuperWeaponType = 0;
+
+//For Max Ammos
+int AMMO_SHOCKCHARGES;
+int SHOCKCHARGES_BOOST;
+
+const string SND_LVLUP = "items/r_item1.wav";
+const string SND_LVLUP_800 = "items/r_item2.wav";
+const string SND_PRESTIGE = "items/r_item2.wav";
+const string SND_READY = "items/suitchargeok1.wav";
+const string SND_AURA01 = "items/medshot5.wav";
+const string SND_AURA02 = "items/medshot5.wav";
+const string SND_AURA03 = "items/medshot5.wav";
+const string SND_HOLYGUARD = "items/gunpickup4.wav";
+const string SND_HOLYWEP = "items/ammopickup2.wav";
+const string SND_JUMP = "player/pl_jump2.wav";
+const string SND_JUMP_LAND = "player/pl_jumpland2.wav";
 const string SND_NULL = "null.wav";
 
 final class CSCRPGCore
@@ -114,7 +122,6 @@ final class CSCRPGCore
 			CBasePlayer@ pPlayer = g_PlayerFuncs.FindPlayerByIndex( i );
 			if ( (pPlayer !is null) && (pPlayer.IsConnected()) )
 			{
-				float flCurrentFrags = int(pPlayer.pev.frags);
 				string szSteamId = g_EngineFuncs.GetPlayerAuthId( pPlayer.edict() );
 				if ( g_PlayerCoreData.exists(szSteamId) )
 				{
@@ -142,7 +149,7 @@ final class CSCRPGCore
 					PlayerTimers( pPlayer, data );
 					
 					// Playtime EXP bonus
-					PlayTimeEXP( pPlayer, data );
+					//PlayTimeEXP( pPlayer, data );
 					
 					// Draw our HUD info
 					DrawHUDInfo( pPlayer, data );
@@ -150,16 +157,17 @@ final class CSCRPGCore
 					// AchievementsCheck
 					CheckForAchievements( pPlayer, data );
 					
-					if ( flCurrentFrags <= data.flScore ) continue;
-					
 					// Set our values and such
-					data.flScore = flCurrentFrags;
+					int currentScore = int(pPlayer.pev.frags);
+					data.iExp += currentScore - data.iScore;
+					if(data.iExp <= 0) data.iExp = 0;
+					data.iScore = currentScore;
 					
-					// Increase our EXP
-					IncreaseEXP( data );
+					// Increase our EXP (bonus bullshit)
+					//IncreaseEXP( data );
 					
 					// Give some cash
-					data.iSouls += Math.RandomLong( 1, 5 );
+					//data.iSouls += Math.RandomLong( 0, 0 );
 					
 					// Calculate level up, and save our data
 					CalculateLevelUp( pPlayer, data );
@@ -174,7 +182,7 @@ final class CSCRPGCore
 		if ( data is null ) return;
 		if ( data.iWaitTimer_UseModel > 0 ) return;
 		
-		// Prestige
+		// Prestige Achievements
 		if ( data.iPrestige >= 1 )
 			g_Achivements.GiveAchievement( pPlayer, "prestige_1", true );
 		if ( data.iPrestige >= 2 )
@@ -191,7 +199,7 @@ final class CSCRPGCore
 		// Check if we can add our player models tied to achievements
 		AchievementPlayerModels( data );
 	}
-	
+		////Achievement Rewards - Playermodels
 	void AchievementPlayerModels( PlayerData@ data )
 	{
 		if ( data is null ) return;
@@ -205,7 +213,7 @@ final class CSCRPGCore
 			data.AddPlayerModel( "afterlife_spetz2" );
 		}
 	}
-	
+			//Achievement Rewards
 	void CheckForSpecificAchievement( CBasePlayer@ pPlayer, string szIDCheck )
 	{
 		if ( szIDCheck == "weapon_runeblade" )
@@ -220,6 +228,7 @@ final class CSCRPGCore
 			g_Achivements.GiveAchievement( pPlayer, "scinade", true );
 	}
 	
+		//HUD - Skill Cooldown Progress
 	private string GetSkillProgress( float flProgress, float flProgressMAX )
 	{
 		float ratio = flProgress / flProgressMAX;
@@ -230,36 +239,42 @@ final class CSCRPGCore
 		for ( int i = 0; i < 10; i++ )
 		{
 			if ( i <= realpos )
-				output += "#";
+				output += "|";
 			else
-				output += "-";
+				output += ".";
 		}
 		
 		output += "]";
 		return output;
 	}
-	
+		//Top-Right RPG HUD
 	private void DrawHUDInfo( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( pPlayer is null ) return;
 		if ( data is null ) return;
+
+		g_AllBonusEXP = (data.iPrestige * 1 + data.iCommunityEXP); //Display total bonus XP from Prestige Was g_AllBonusEXP = g_iWeeklyBonusEXP + data.iMedals + (data.iPrestige * 1);
 		
 		string szBonusEXP = "";
-		if ( g_iWeeklyBonusEXP > 0 )
-			szBonusEXP = " ( +" + g_iWeeklyBonusEXP + " )";
+		if ( g_AllBonusEXP > 0 ) //Was if ( g_iWeeklyBonusEXP >= 0 )
+			szBonusEXP = " (+" + g_AllBonusEXP + " XP Bonus)";
 		string output = "";
 		if ( data.iLevel < MAX_LEVEL )
-			output = "Exp.:  " + data.iExp + " / " + data.iExpMax + szBonusEXP + "\n";
-		output += "Level:  " + data.iLevel + " / " + MAX_LEVEL + "\n";
-		output += "Medals:  " + data.iMedals + " / " + g_Achivements.GetMaxMedals() + "\n";
-		output += "Souls:  " + data.iSouls + "\n";
-		output += "Prestige:  " + data.iPrestige + " / " + MAX_PRESTIGE + "\n";
-		output += "Your SteamID:  " + data.szSteamID + "\n";
+			output = "XP: (" + data.iExp + " / " + data.iExpMax + ")" + szBonusEXP + "\n";
+			output += "Level: " + data.iLevel + " / " + MAX_LEVEL + "\n";
+			//output += "Achievements:  " + data.iMedals + " / " + g_Achivements.GetMaxMedals() + "\n";
+			//output += "Souls:  " + data.iSouls + "\n"; Disabled
+			output += "Prestige: " + data.iPrestige + " / " + MAX_PRESTIGE + "\n";
+			//output += "Your SteamID:  " + data.szSteamID + "\n"; Disabled
+
+			//Ammo/Explosive Timers on HUD
+			output += "Ammo Resupply - (" + data.iWaitTimer_AmmoDrop + "s)\n";
+			output += "Explosives Resupply - (" + data.iWaitTimer_WeaponDrop + "s)\n";
 		
 		if ( data.iPoints > 0 )
-			output += "\nYou have " + data.iPoints + " skillpoint(s) available!\nWrite /skills to access the menu!\n\n";
+			output += "\nYou have " + data.iPoints + " skillpoints available!\nWrite /skills to spend them!\n\n";
 		
-		// Our message
+		// Hud settings for RPG Display
 		HUDTextParams params;
 		
 		params.channel = 16;	// We don't want to break other text channels, so lets put it here instead
@@ -267,14 +282,14 @@ final class CSCRPGCore
 		params.x = 0.75;
 		params.y = 0.04;
 		
-		params.r1 = 184;
-		params.g1 = 10;
-		params.b1 = 14;
+		params.r1 = 255;
+		params.g1 = 255;
+		params.b1 = 0;
 		params.a1 = 225;
 		
-		params.r2 = 255;
-		params.g2 = 15;
-		params.b2 = 15;
+		params.r2 = 127;
+		params.g2 = 0;
+		params.b2 = 255;
 		params.a2 = 200;
 		
 		params.fadeinTime = 0.0;
@@ -288,39 +303,42 @@ final class CSCRPGCore
 			output
 		);
 		
-		// Our holy armor / battlecry
+		// Summon Shock Roach (Was Holy Armor)
 		string buffer1 = "";
 		string buffer2 = "";
 		
-		if ( data.iStat_holyarmor > 0 )
+		if ( data.iStat_shockrifle > 0 )
 		{
 			if ( data.iWaitTimer_HolyArmor >= data.iWaitTimer_HolyArmor_Max )
 			{
-				if ( IsGodMode( pPlayer ) )
-					buffer1 = "Holy Armor:\nCan't be used right now!\n";
+				if ( pPlayer.IsAlive() )
+					buffer1 = "Shock Rifle: [Type 'shockrifle' to use]\n";
 				else
-					buffer1 = "Holy Armor:\n[Write 'medic' to use]\n";
+					buffer1 = "Shock Rifle: Cannot use whilst dead!\n";
 			}
 			else
-				buffer1 = "Holy Armor:\n" + GetSkillProgress( data.iWaitTimer_HolyArmor, data.iWaitTimer_HolyArmor_Max ) + "\n";
+				buffer1 = "Shock Rifle: On cooldown...  " + "(" + data.iDisplayTimer_SuperWeapon + "s)" + "\n"; //Display Time left on HUD
+				//buffer1 = "Shock Rifle Cooldown: " + GetSkillProgress( data.iWaitTimer_HolyArmor, data.iWaitTimer_HolyArmor_Max ) + " (" + data.iDisplayTimer_SuperWeapon + "s)" + "\n"; //Changed to use skill timers in favour of skill progress bars 
 		}
 		
-		if ( data.iStat_battlecry > 0 )
+		if ( data.iStat_firstaid > 0 )
 		{
 			if ( data.iWaitTimer_BattleCry >= data.iWaitTimer_BattleCry_Max )
 			{
-				if ( g_AuraIsActive )
-					buffer2 = "The Warrior's Battlecry:\nCan't be used right now!\n";
+				//if ( g_AuraIsActive )
+				if ( pPlayer.IsAlive() )
+					buffer2 = "First Aid (Heal): [Type 'firstaid' to use]\n";
 				else
-					buffer2 = "The Warrior's Battlecry:\n[Write 'grenade' to use]\n";
+					buffer2 = "First Aid (Revive): [Type 'firstaid' to use]\n";
 			}
 			else
-				buffer2 = "The Warrior's Battlecry:\n" + GetSkillProgress( data.iWaitTimer_BattleCry, data.iWaitTimer_BattleCry_Max ) + "\n";
+				buffer2 = "First Aid: On cooldown... " + "(" + data.iDisplayTimer_Aura + "s)" + "\n"; //Display bar and time left on HUD
+				//buffer2 = "First Aid: " + GetSkillProgress( data.iWaitTimer_BattleCry, data.iWaitTimer_BattleCry_Max ) + " (" + iDisplayTimer_Aura + "s)" + "\n"; //Changed to use skill timers in favour of skill progress bars 
 		}
 		
 		string output2 = buffer1 + buffer2;
 		
-		// Our message
+		// Hud settings for Skill Progress Display
 		HUDTextParams params2;
 		
 		params2.channel = 17;	// We don't want to break other text channels, so lets put it here instead
@@ -328,14 +346,14 @@ final class CSCRPGCore
 		params2.x = 0.02;
 		params2.y = 0.8;
 		
-		params2.r1 = 184;
-		params2.g1 = 10;
-		params2.b1 = 14;
+		params2.r1 = 0;
+		params2.g1 = 255;
+		params2.b1 = 255;
 		params2.a1 = 225;
 		
-		params2.r2 = 255;
-		params2.g2 = 15;
-		params2.b2 = 15;
+		params2.r2 = 127;
+		params2.g2 = 0;
+		params2.b2 = 255;
 		params2.a2 = 255;
 		
 		params2.fadeinTime = 0.0;
@@ -349,7 +367,7 @@ final class CSCRPGCore
 			output2
 		);
 	}
-	
+			//XP Over time
 	private void PlayTimeEXP( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( data is null ) return;
@@ -357,57 +375,65 @@ final class CSCRPGCore
 		{
 			if ( data.iLevel < MAX_LEVEL )
 			{
-				data.iExp += 150 + data.iLevel;
+				data.iExp += 10; //Timed XP reward scales with level
 				CalculateLevelUp( pPlayer, data );
 			}
-			data.iWaitTimer_FreeEXP = 120;
-			data.iSouls += Math.RandomLong( 25, 50 );
+			data.iWaitTimer_FreeEXP = 600; //Give XP this many seconds (10 mins)
+			data.iSouls += Math.RandomLong( 0, 0 ); //Disabled for now as souls has no current use
 		}
 		else
 			data.iWaitTimer_FreeEXP--;
 	}
-	
+		//Max Health & Armor Scaling
 	void SetMaxArmorHealth( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( pPlayer is null ) return;
 		if ( data is null ) return;
 		
 		const int MAX_DEFAULT = 100;
-		pPlayer.pev.max_health = MAX_DEFAULT + data.iStat_health + data.iMedals;
-		pPlayer.pev.armortype = MAX_DEFAULT + data.iStat_armor + data.iMedals;
+		pPlayer.pev.max_health = MAX_DEFAULT + ( data.iStat_health + data.iPrestige ) * 10; //Scales health max
+		pPlayer.pev.armortype = MAX_DEFAULT + ( data.iStat_armor + data.iPrestige ) * 10; //Scales armor max
 	}
-	
+		//Max Health & Armor Setting
 	private void SetArmorHealth( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( pPlayer is null ) return;
 		if ( data is null ) return;
-		pPlayer.pev.health += data.iStat_health;
-		pPlayer.pev.armorvalue += data.iStat_armor;
+		pPlayer.pev.health += ( data.iStat_health + data.iPrestige ) * 10;
+		pPlayer.pev.armorvalue += ( data.iStat_armor + data.iPrestige ) * 10;
 	}
-	
-	private void DoBattleCry( CBasePlayer@ pPlayer, PlayerData@ data )
-	{
-		// Reads the player health, aura (+150)
-		float flvalue = pPlayer.pev.health / 2 + 150 + data.iStat_battlecry;
+
+			//First Aid (Was Battlecry)
+	private void DoFirstAid( CBasePlayer@ pPlayer, PlayerData@ data )
+	{	
+		// Get % of max health
+		int ihealskill = data.iStat_firstaid; //Get skill level
+		float flhpvalue_self = pPlayer.pev.max_health / 100 * ( ihealskill * 10 );
 		
-		// Grabs our health and armor values
-		float flvalue_self = pPlayer.pev.health / 2 + 180 + data.iStat_battlecry;
-		float flvalue_self_armor = pPlayer.pev.armorvalue / 2 + 180 + data.iStat_battlecry;
+		// Get % of target player max health
+		float flhpvalue = pPlayer.pev.max_health / 100 * ( ihealskill * 10 );
 		
-		// Change to int
-		int value = int( flvalue );
-		int value_self = int( flvalue_self );
-		int value_self_armor = int( flvalue_self_armor );
-		
-		// If the player has less health or armor, override it.
-		if ( pPlayer.pev.health < value_self )
-			pPlayer.pev.health = value_self;
-		
-		if ( pPlayer.pev.armorvalue < value_self_armor )
-			pPlayer.pev.armorvalue = value_self_armor;
+		// Convert to floats to int
+		int ihpvalue_self = int( flhpvalue_self );
+		int ihpvalue = int( flhpvalue );
+
+		// Heal Mode - If not dead, heal full amount
+		if ( pPlayer.pev.health > 0 )
+			pPlayer.pev.health += ihpvalue_self;
+
+		// Revive Mode - If dead, revive, only heal for half
+			if ( pPlayer.pev.health < 1 )	
+				pPlayer.Revive();
+
+					if ( pPlayer.pev.health > 0 )
+						pPlayer.pev.health += ihpvalue_self / 2;
+
+		// If we ever overheal, remove it
+		if ( pPlayer.pev.health > pPlayer.pev.max_health )
+			pPlayer.pev.health = pPlayer.pev.max_health;
 		
 		// Within radius? then give them some boost!
-		float distance = 200.0f + data.iStat_battlecry;
+		float distance = 300.0f;
 		for ( int i = 1; i <= g_Engine.maxClients; i++ )
 		{
 			CBasePlayer@ pTarget = g_PlayerFuncs.FindPlayerByIndex( i );
@@ -418,18 +444,59 @@ final class CSCRPGCore
 				Vector vEntOrigin = (pTarget.pev.absmin + pTarget.pev.absmax)/2;
 				if ( (vEntOrigin - pPlayer.pev.origin).Length() < distance )
 				{
-					if ( pPlayer.pev.health < value )
-						pPlayer.pev.health = value;
-					
-					if ( pPlayer.pev.armorvalue < value )
-						pPlayer.pev.armorvalue = value;
-					
+					// Heal Mode - If not dead, heal full amount
+					if ( pPlayer.pev.health > 0 )
+						pPlayer.pev.health += ihpvalue_self;
+
+					// Revive Mode - If dead, revive, only heal for half
+						if ( pPlayer.pev.health < 1 )	
+							pPlayer.Revive();
+
+								if ( pPlayer.pev.health > 0 )
+									pPlayer.pev.health += ihpvalue_self;
+
+					// If we ever overheal, remove it
+					if ( pPlayer.pev.health > pPlayer.pev.max_health )
+						pPlayer.pev.health = pPlayer.pev.max_health;
+
 					g_Achivements.GiveAchievement( pPlayer, "teamplayer", true );
 				}
 			}
 		}
 	}
-	
+
+	//Set any customised max ammo types
+	private void SetMaxAmmo( CBasePlayer@ pPlayer )
+	{	
+		AMMO_SHOCKCHARGES = g_PlayerFuncs.GetAmmoIndex( "shock charges" ); //Get ammo index for type and store it
+		if ( pPlayer is null ) return;
+			pPlayer.m_rgAmmo( AMMO_SHOCKCHARGES, 100 + SHOCKCHARGES_BOOST ); //Boost shock rifle ammo with skill level
+	}
+
+		//Give a shock roach and increase shock rifle max charges
+	private void GiveSuperWeapon( CBasePlayer@ pPlayer )
+	{	
+		AMMO_SHOCKCHARGES = g_PlayerFuncs.GetAmmoIndex( "shock charges" );
+
+		if ( pPlayer is null ) return;
+			GiveToPlayer::GiveWeapon( pPlayer, "weapon_shockrifle" ); //Give the player a shockroach
+				pPlayer.m_rgAmmo( AMMO_SHOCKCHARGES, 100 + SHOCKCHARGES_BOOST ); //Boost shock rifle ammo with skill level
+
+		//Give random super weapon - MINIGUN DOESN'T WORK
+		//if ( pPlayer is null ) return;
+		//	SuperWeaponType = Math.RandomLong( 0, 1 );
+		//		if ( SuperWeaponType > 0 )	
+		//			GiveToPlayer::GiveWeapon( pPlayer, "weapon_minigun" );
+		//		if ( SuperWeaponType < 1 )
+		//			GiveToPlayer::GiveWeapon( pPlayer, "weapon_shockrifle" );
+	}
+
+	private void FirstAidBuffMedkit( CBasePlayer@ pPlayer, PlayerData@ data )
+	{	
+		pPlayer.GiveAmmo( 1 + ( data.iStat_firstaid + data.iPrestige * 5 ),"health", 100 ); //Scale Medkit recharge with First Aid skill
+	}
+
+			//Player Timers
 	private void PlayerTimers( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( pPlayer is null ) return;
@@ -439,33 +506,38 @@ final class CSCRPGCore
 		
 		if ( data.iWaitTimer_HolyArmor < data.iWaitTimer_HolyArmor_Max )
 		{
-			data.iWaitTimer_HolyArmor++;
+			data.iWaitTimer_HolyArmor++; //Increase Timer
+			data.iDisplayTimer_SuperWeapon--; //Reduce from Display Timer instead of add (count down)
 			if ( data.iWaitTimer_HolyArmor == data.iWaitTimer_HolyArmor_Max )
 				ClientSidedSound( pPlayer, SND_READY );
 		}
 		
 		if ( data.iWaitTimer_HolyArmor_Reset > 0 )
-			data.iWaitTimer_HolyArmor_Reset--;
+		{
+				SHOCKCHARGES_BOOST = ( data.iStat_shockrifle + data.iPrestige ) * 20; //Set Shock Rifle max charges to scale with Shock Roach skill
+				GiveSuperWeapon( pPlayer ); //Give Shock Rifle, set max ammo
+				data.iWaitTimer_HolyArmor_Reset--;
+		}		
 		else
 		{
 			if ( data.iWaitTimer_HolyArmor_Reset == 0 )
 			{
-				SetGodMode( pPlayer, false );
 				SetAuraGlow( false, pPlayer, 255, 255, 255 );
 				data.iWaitTimer_HolyArmor_Reset = -1;
 			}
 		}
-		
+			//First Aid (Battlecry) Timers
 		if ( data.iWaitTimer_BattleCry < data.iWaitTimer_BattleCry_Max )
 		{
-			data.iWaitTimer_BattleCry++;
+			data.iWaitTimer_BattleCry++; //Increase Timer
+			data.iDisplayTimer_Aura--; //Reduce from Display Timer instead of add (count down)
 			if ( data.iWaitTimer_BattleCry == data.iWaitTimer_BattleCry_Max )
 				ClientSidedSound( pPlayer, SND_READY );
 		}
 		
 		if ( data.iWaitTimer_BattleCry_Reset > 0 )
 		{
-			DoBattleCry( pPlayer, data );
+			DoFirstAid( pPlayer, data );
 			data.iWaitTimer_BattleCry_Reset--;
 		}
 		else
@@ -477,28 +549,30 @@ final class CSCRPGCore
 				data.iWaitTimer_BattleCry_Reset = -1;
 			}
 		}
-		
+				//Gift of The Gods Timers - Ammo Regen/Explosive Drop
 		if ( pPlayer.IsAlive() )
 		{
-			if ( data.iStat_gotg_ammo > 0 )
+			if ( data.iStat_ammoregen > 0 )
 			{
 				if ( data.iWaitTimer_AmmoDrop > 0 )
 					data.iWaitTimer_AmmoDrop--;
 				else
 				{
-					g_AmmoDrop.GiveDrop( pPlayer, data.iStat_gotg_ammo );
-					data.iWaitTimer_AmmoDrop = 60 - data.iStat_gotg_ammo;
+					g_AmmoDrop.GiveDrop( pPlayer, data.iStat_ammoregen ); //Give ammo drops
+					data.iWaitTimer_AmmoDrop = 10 - ( data.iStat_ammoregen + data.iPrestige ) * 3/10; //Reset timer based on level (starts at 10 and can get as low as 6)
 				}
+				
 			}
 			
-			if ( data.iStat_gotg_weapon > 0 )
+			if ( data.iStat_explosiveregen > 0 )
 			{
 				if ( data.iWaitTimer_WeaponDrop > 0 )
 					data.iWaitTimer_WeaponDrop--;
 				else
 				{
-					g_WeaponDrop.GiveDrop( pPlayer, data.iStat_gotg_ammo );
-					data.iWaitTimer_WeaponDrop = 60 - data.iStat_gotg_weapon;
+					//g_WeaponDrop.GiveDrop( pPlayer, data.iStat_ammoregen ); //Give random weapon, no longer used
+					g_AmmoDrop.GiveDropExplosive( pPlayer, data.iStat_explosiveregen ); //Give ammo for all explosives
+					data.iWaitTimer_WeaponDrop = 120 - ( data.iStat_explosiveregen + data.iPrestige ) * 1; //Reset timer based on level
 				}
 			}
 		}
@@ -523,33 +597,60 @@ final class CSCRPGCore
 		iUnusedPoints -= data.iStat_health_regen;
 		iUnusedPoints -= data.iStat_armor;
 		iUnusedPoints -= data.iStat_armor_regen;
-		iUnusedPoints -= data.iStat_gotg_ammo;
-		iUnusedPoints -= data.iStat_gotg_weapon;
+		iUnusedPoints -= data.iStat_ammoregen;
+		iUnusedPoints -= data.iStat_explosiveregen;
 		iUnusedPoints -= data.iStat_doublejump;
-		iUnusedPoints -= data.iStat_battlecry;
-		iUnusedPoints -= data.iStat_holyarmor;
+		iUnusedPoints -= data.iStat_firstaid;
+		iUnusedPoints -= data.iStat_shockrifle;
 		
 		// Our unused points
 		data.iPoints = iUnusedPoints;
 	}
-	
+			//Health & Armor Regen Scaling
 	private void RegenPlayer( CBasePlayer@ pPlayer, PlayerData@ data )
 	{
 		if ( pPlayer is null ) return;
-		if ( !pPlayer.IsAlive() ) return;
 		if ( data is null ) return;
 		if ( data.bIsHurt ) return;
 		
-		if ( data.iStat_health_regen > 0 )
+		if ( pPlayer.IsAlive() )
 		{
-			if ( pPlayer.pev.health < pPlayer.pev.max_health )
-				pPlayer.pev.health += 5 + data.iStat_health_regen;
-		}
-		
-		if ( data.iStat_armor_regen > 0 )
-		{
-			if ( pPlayer.pev.armorvalue < pPlayer.pev.armortype )
-				pPlayer.pev.armorvalue += 5 + data.iStat_armor_regen;
+			FirstAidBuffMedkit( pPlayer, data ); //Regen extra Medkit charge
+			SetMaxArmorHealth( pPlayer, data ); //Setting max health here again to override max limits on maps
+			if ( data.iStat_health_regen > 0 )
+			{
+				// Restore for % of max health
+				float flregenvalue_hp = pPlayer.pev.max_health / 100 * data.iStat_health_regen + data.iPrestige / 2; //Get % of max health based on skill level as float, then convert to int
+						
+				// Change to floats to int so they are usable (ingame health is an integer)
+				int iregenvalue_hp = int( flregenvalue_hp );
+
+				//If health is not full, regenerate
+				if ( pPlayer.pev.health < pPlayer.pev.max_health )
+					pPlayer.pev.health += iregenvalue_hp; //Add % of health to total health
+
+					//If we heal over our maximum health, set it back to stop overheal
+					if ( pPlayer.pev.health > pPlayer.pev.max_health )
+						pPlayer.pev.health = pPlayer.pev.max_health;
+			}
+			
+			if ( data.iStat_armor_regen > 0 )
+			{
+
+				// Restore for % of max armor
+				float flregenvalue_ap = pPlayer.pev.armortype / 100 * data.iStat_armor_regen + data.iPrestige / 2; //Get % of max armor based on skill level as float, then convert to int
+						
+				// Change to floats to int so they are usable (ingame armor is an integer)
+				int iregenvalue_ap = int( flregenvalue_ap );
+
+				//If armor is not full, regenerate
+				if ( pPlayer.pev.armorvalue < pPlayer.pev.max_health )
+					pPlayer.pev.armorvalue += iregenvalue_ap; //Add % of armor to total armor
+
+					//If we restore over our maximum armor, set it back to stop overheal
+					if ( pPlayer.pev.armorvalue > pPlayer.pev.armortype )
+						pPlayer.pev.armorvalue = pPlayer.pev.armortype;
+			}
 		}
 	}
 	
@@ -572,7 +673,7 @@ final class CSCRPGCore
 		{
 			PlaySoundEffect( pPlayer, SND_LVLUP_800 );
 			string szNick = pPlayer.pev.netname;
-			g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] Everyone say \"Congratulations!!!\" to " + szNick + ", who has reached Level " + MAX_LEVEL + "!!\n");
+			g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] \"Congratulations!\" to " + szNick + ", for reaching Level " + MAX_LEVEL + "!\n");
 		}
 		else
 			ClientSidedSound( pPlayer, SND_LVLUP );
@@ -589,7 +690,7 @@ final class CSCRPGCore
 		
 		PlayerData data;
 		data.szSteamID = SteamID;
-		data.iMedals = 0;
+		//data.iMedals = 0;
 		g_PlayerCoreData[data.szSteamID] = data;
 		
 		return true;
@@ -620,11 +721,11 @@ final class CSCRPGCore
 			case 7: data.iStat_armor = iOutput; break;
 			case 8: data.iStat_health_regen = iOutput; break;
 			case 9: data.iStat_armor_regen = iOutput; break;
-			case 10: data.iStat_gotg_ammo = iOutput; break;
-			case 11: data.iStat_gotg_weapon = iOutput; break;
+			case 10: data.iStat_ammoregen = iOutput; break;
+			case 11: data.iStat_explosiveregen = iOutput; break;
 			case 12: data.iStat_doublejump = iOutput; break;
-			case 13: data.iStat_battlecry = iOutput; break;
-			case 14: data.iStat_holyarmor = iOutput; break;
+			case 13: data.iStat_firstaid = iOutput; break;
+			case 14: data.iStat_shockrifle = iOutput; break;
 			case 15: data.szModel = szLine; break;
 			case 16: data.szModelSpecial = szLine; break;
 			case 17: data.bIsCommunity = iOutput > 0 ? true : false; break;
@@ -677,11 +778,11 @@ final class CSCRPGCore
 		data.iStat_health_regen = LoadFromDB( SteamID, "health_regen" );
 		data.iStat_armor = LoadFromDB( SteamID, "armor" );
 		data.iStat_armor_regen = LoadFromDB( SteamID, "armor_regen" );
-		data.iStat_gotg_ammo = LoadFromDB( SteamID, "gotg_ammo" );
-		data.iStat_gotg_weapon = LoadFromDB( SteamID, "gotg_weapon" );
+		data.iStat_ammoregen = LoadFromDB( SteamID, "gotg_ammo" );
+		data.iStat_explosiveregen = LoadFromDB( SteamID, "gotg_weapon" );
 		data.iStat_doublejump = LoadFromDB( SteamID, "doublejump" );
-		data.iStat_battlecry = LoadFromDB( SteamID, "battlecry" );
-		data.iStat_holyarmor = LoadFromDB( SteamID, "holyarmor" );
+		data.iStat_firstaid = LoadFromDB( SteamID, "battlecry" );
+		data.iStat_shockrifle = LoadFromDB( SteamID, "holyarmor" );
 	}
 	
 	private void AddPlayerModel( CBasePlayer@ pPlayer, string SteamID, string szModel )
@@ -807,8 +908,8 @@ final class CSCRPGCore
 			string output = "stats " + data.iLevel + " " + data.iPrestige + " "
 			+ data.iSouls + " " + data.iExp + " " + data.iExpMax + " " + data.iStat_health
 			+ " " + data.iStat_armor + " " + data.iStat_health_regen + " " + data.iStat_armor_regen + " "
-			+ data.iStat_gotg_ammo + " " + data.iStat_gotg_weapon + " " + data.iStat_doublejump + " "
-			+ data.iStat_battlecry + " " + data.iStat_holyarmor + " " + data.szModel + " " + data.szModelSpecial + " "
+			+ data.iStat_ammoregen + " " + data.iStat_explosiveregen + " " + data.iStat_doublejump + " "
+			+ data.iStat_firstaid + " " + data.iStat_shockrifle + " " + data.szModel + " " + data.szModelSpecial + " "
 			+ data.bIsCommunity + " " + data.bIsDonator + "\n";
 			
 			// Add our achievements
@@ -860,11 +961,11 @@ final class CSCRPGCore
 			LevelUp( pPlayer, data );
 		SaveData( data );
 	}
-	
+		//Required XP / XP Needed
 	private void RequiredEXP( PlayerData@ data )
 	{
 		if ( data is null ) return;
-		float flLevelToEXPCalculation = float( data.iLevel ) * 1500.0 * 8.5;
+		float flLevelToEXPCalculation = float( data.iLevel ) * 5; //Was float( data.iLevel ) * 1500.0 * 8.5
 		data.iExpMax = int( flLevelToEXPCalculation ) + data.iLevel;
 	}
 	
@@ -872,28 +973,33 @@ final class CSCRPGCore
 	{
 		if ( data is null ) return 0;
 		
-		// Medal calculation
-		float flMedals = 0;
-		if ( data.iMedals > 0 )
-			flMedals = data.iMedals * 8;
-		int iMedalExp = int( flMedals );
+		// Medal calculation - Medals made defunct, no longers scales stats or gives bonus XP
+		//float flMedals = 0;
+		//if ( data.iMedals > 0 )
+		//	flMedals = data.iMedals; //Was 8, medals give +1 extra base XP per medal
+		//int iMedalExp = 0; //Was int iMedalExp = int( flMedals );
 		
 		// Lets calculate
 		if ( data.iPrestige > 0 )
 		{
-			float flPrestigeCalculate = float( data.iPrestige / 0.1 ) * 500;
-			return int( flPrestigeCalculate ) + iMedalExp + g_iWeeklyBonusEXP;
+			float flPrestigeCalculate = float( data.iPrestige * 1 ); //Give bonus XP for each prestige | Was float( data.iPrestige / 0.1 ) * 500
+			return int( flPrestigeCalculate ) + g_iWeeklyBonusEXP;
 		}
 		
-		return iMedalExp + g_iWeeklyBonusEXP;
+		return g_iWeeklyBonusEXP;
 	}
-	
+		//Give XP
 	private void IncreaseEXP( PlayerData@ data )
 	{
 		if ( data is null ) return;
-		int randnum = Math.RandomLong( 500, 1000 );
-		float flLevelCalculate = float( data.iLevel + randnum ) * 10 * 7.2;
+		float flLevelCalculate = 1; //Base XP
 		int iCalculateEXP = int( flLevelCalculate ) + CalculateBonusEXP( data );
+
+		//Old XP Reward
+		//if ( data is null ) return;
+		//int randnum = Math.RandomLong( 500, 1000 );
+		//float flLevelCalculate = float( data.iLevel + randnum ) * 10 * 7.2;
+		//int iCalculateEXP = int( flLevelCalculate ) + CalculateBonusEXP( data );
 		
 		// Set the calculated EXP.
 		data.iExp += iCalculateEXP;
@@ -924,9 +1030,6 @@ final class CSCRPGCore
 		// Increase our prestige
 		data.iPrestige++;
 		
-		if ( data.iPrestige >= 2 )
-			GiveToPlayer::GiveItem( pPlayer, "item_longjump" );
-		
 		// Reset skills
 		ResetSkills( pPlayer );
 		
@@ -944,7 +1047,7 @@ final class CSCRPGCore
 		string szVal = "st";
 		if ( data.iPrestige > 1 )
 			szVal = data.iPrestige > 2 ? "th" : "nd";
-		g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " have prestiged for the " + data.iPrestige + szVal + " time!!\n");
+		g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " has prestiged for the " + data.iPrestige + szVal + " time!\n");
 	}
 	
 	private void SetAuraGlow( bool state, CBasePlayer@ pPlayer, int red, int green, int blue )
@@ -1007,17 +1110,23 @@ final class CSCRPGCore
 			if ( data is null ) return;
 			if ( data.bIsCommunity )
 			{
-				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "You are already an community member!\n");
+				g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "You are already a community member!\n");
 				return;
 			}
 			data.bIsCommunity = true;
-			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Welcome to the Afterlife Community!\nCommunity models has been unlocked!\n");
+			g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Welcome to the Server Community!\nCommunity bonus XP unlocked!\n");
 			g_Achivements.GiveAchievement( pPlayer, "community", true );
+			data.iCommunityEXP = 0; //Was 1
 		}
 	}
 	
+	//Admins
 	bool IsAdministrators( CBasePlayer@ pPlayer, string SteamID )
 	{
+
+		//Chaotic Akantor
+		//if ( SteamID == "STEAM_0:1:" )
+		//	return true;
 		// JonnyBoy0719 -- Creator of SCRPG
 		if ( SteamID == "STEAM_0:1:24323838" )
 			return true;
@@ -1044,9 +1153,10 @@ final class CSCRPGCore
 	
 	private void GiveSpecialWeapons( CBasePlayer@ pPlayer, string SteamID )
 	{
-		// Stormgiant (also known as ban hammer)
+		// Give Admin only weapons here
 		if ( IsAdministrators( pPlayer, SteamID ) )
-			GiveToPlayer::GiveWeapon( pPlayer, "weapon_stormgiant" );
+			//GiveToPlayer::GiveWeapon( pPlayer, "weapon_stormgiant" );
+			//GiveToPlayer::GiveWeapon( pPlayer, "weapon_skull11" );
 		
 		// Give donor weapons
 		GiveDonorWeapons( pPlayer, SteamID );
@@ -1066,10 +1176,10 @@ final class CSCRPGCore
 		if( g_PlayerCoreData.exists( szSteamId ) )
 		{
 			PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
-			if ( data.iPoints < 5 )
+			//if ( data.iPoints < 5 )					 //Commented out so that multiple skill spend menu is disabled
 				g_SkillMenu.Show( pPlayer, data.iPoints );
-			else
-				g_SkillMenuEx.Show( pPlayer, data.iPoints );
+			//else
+			//	g_SkillMenuEx.Show( pPlayer, data.iPoints );
 		}
 	}
 	
@@ -1152,7 +1262,7 @@ final class CSCRPGCore
 		
 		if ( !bNewWeek ) return;
 		
-		g_iWeeklyBonusEXP = Math.RandomLong( 5500, 10650 );
+		g_iWeeklyBonusEXP = Math.RandomLong( 0, 0 ); //Was Math.RandomLong( 5500, 10650 ) Always Off for now
 		
 		@player_data = g_FileSystem.OpenFile( "scripts/plugins/store/scrpg_weekly.txt", OpenFile::WRITE );
 		if ( player_data !is null && player_data.IsOpen() )
@@ -1348,7 +1458,7 @@ final class CSCRPGCore
 		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, "\nYou have completed " + iCompleted + " out of " + g_Achivements.GetAmount() + " challenges.\n");
 		
 		// Print to chat
-		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "The challenges has been printed on the console!\n");
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "The challenges have been printed to the console!\n");
 	}
 	
 	void ShowCommands( CBasePlayer@ pPlayer )
@@ -1361,8 +1471,8 @@ final class CSCRPGCore
 		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, "RPG Mod Commands\n");
 		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, "===================================================================\n\n");
 		
-		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, ".medic\n  Activates 'Holy Armor'\n");
-		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, ".grenade\n  Activates 'Warrior's Battlecry'\n");
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, ".shockrifle\n  Activates 'Shock Roach'\n");
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, ".firstaid\n  Activates 'First Aid'\n");
 		
 		if ( IsAdministrators( pPlayer, szSteamId ) )
 		{
@@ -1378,7 +1488,7 @@ final class CSCRPGCore
 		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTCONSOLE, "\n===================================================================\n");
 		
 		// Print to chat
-		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "The commands has been printed on the console!\n");
+		g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "The commands have been printed to the console!\n");
 	}
 	
 	void TryPrestige( CBasePlayer@ pPlayer )
@@ -1430,8 +1540,8 @@ final class CSCRPGCore
 		
 		// Reset everything
 		data.iStat_health = data.iStat_health_regen = data.iStat_armor =
-		data.iStat_armor_regen = data.iStat_gotg_ammo = data.iStat_gotg_weapon =
-		data.iStat_doublejump = data.iStat_battlecry =data.iStat_holyarmor = 0;
+		data.iStat_armor_regen = data.iStat_ammoregen = data.iStat_explosiveregen =
+		data.iStat_doublejump = data.iStat_firstaid = data.iStat_shockrifle = 0;
 		SetMaxArmorHealth( pPlayer, data );
 		
 		// Recalculate our points
@@ -1479,7 +1589,7 @@ final class CSCRPGCore
 			// We are in godmode
 			if ( IsGodMode( pPlayer ) ) return;
 			data.bIsHurt = true;
-			data.iWaitTimer_Hurt = 8;
+			data.iWaitTimer_Hurt = 5 - (data.iStat_health_regen + data.iStat_armor_regen); //Regen Delay Timer - Time to wait after taking damage before health and armor regen kicks in
 			if ( data.iWaitTimer_Hurt_Snd == 0 )
 			{
 				PlayPlayerSound( pPlayer, sound_pain );
@@ -1496,10 +1606,10 @@ final class CSCRPGCore
 			string szSound;
 			switch( Math.RandomLong( 0, 3 ) )
 			{
-				case 0: szSound = "afterlife/player/postal/grenade1.wav"; break;
-				case 1: szSound = "afterlife/player/postal/grenade5.wav"; break;
-				case 2: szSound = "afterlife/player/postal/medic2.wav"; break;
-				case 3: szSound = "afterlife/player/postal/medic12.wav"; break;
+				case 0: szSound = "items/r_item1.wav"; break;
+				case 1: szSound = "items/r_item1.wav"; break;
+				case 2: szSound = "items/r_item1.wav"; break;
+				case 3: szSound = "items/r_item1.wav"; break;
 			}
 			g_SCRPGCore.ClientSidedSound( pPlayer, szSound );
 		}
@@ -1516,39 +1626,41 @@ final class CSCRPGCore
 			PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
 			if ( data.iWaitTimer_SndEffect == 0 )
 			{
-				SendClientCommand( pPlayer, bIsMedicShout ? "medic\n" : "grenade\n" );
+				SendClientCommand( pPlayer, bIsMedicShout ? "shockrifle\n" : "firstaid\n" );
 				data.flWaitTimer_SndEffect_Delay = 0.07;	// Delay it
 				data.bSndEffect = true;
 				data.bSndEffectMedic = bIsMedicShout;
 				data.iWaitTimer_SndEffect = 3;
 			}
 			
-			// Holy armor
-			if ( bIsMedicShout && data.iStat_holyarmor > 0 )
+			// Shock Roach (Was Holy Armor) Skill cooldown and duration
+			if ( bIsMedicShout && data.iStat_shockrifle > 0 )
 			{
 				if ( data.iWaitTimer_HolyArmor == data.iWaitTimer_HolyArmor_Max )
 				{
 					data.iWaitTimer_HolyArmor = 0;
-					data.iWaitTimer_HolyArmor_Max = 300 - data.iStat_holyarmor;
-					data.iWaitTimer_HolyArmor_Reset = 8 + data.iStat_holyarmor;
-					SetGodMode( pPlayer, true );
-					SetAuraGlow( true, pPlayer, 140, 255, 219 );
+					data.iWaitTimer_HolyArmor_Max = 240 - ( data.iStat_shockrifle + data.iPrestige * 1 ); //Shock Rifle Cooldown and reduction from skill
+					data.iWaitTimer_HolyArmor_Reset = 1; //Duration till reset
+					data.iDisplayTimer_SuperWeapon = data.iWaitTimer_HolyArmor_Max; //Set Display timer
+					SetAuraGlow( true, pPlayer, 255, 0, 0 ); //Changed to RED
 					ClientSidedSound( pPlayer, SND_HOLYGUARD );
-					string szNick = pPlayer.pev.netname;
-					g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " has activated their Holy Armor!\n");
-					
+					//string szNick = pPlayer.pev.netname;
+					//g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " has equipped their Shock Rifle!\n");
+						
 					g_Achivements.GiveAchievement( pPlayer, "godsdoing", true );
 				}
 			}
-			// Battlecry
-			else if ( data.iStat_battlecry > 0 )
+
+			// First Aid (Was Battlecry) cooldown and duration
+			else if ( data.iStat_firstaid > 0 )
 			{
 				if ( data.iWaitTimer_BattleCry == data.iWaitTimer_BattleCry_Max )
 				{
 					data.iWaitTimer_BattleCry = 0;
-					data.iWaitTimer_BattleCry_Max = 200 - data.iStat_battlecry;
-					data.iWaitTimer_BattleCry_Reset = 10 + data.iStat_battlecry;
-					SetAuraGlow( true, pPlayer, 255, 15, 15 );
+					data.iWaitTimer_BattleCry_Max = 60 - ( data.iStat_firstaid + data.iPrestige * 1 ); //Cooldown and reduction from skill
+					data.iWaitTimer_BattleCry_Reset = 1; //Duration - Will constantly heal or revive if active
+					data.iDisplayTimer_Aura = data.iWaitTimer_BattleCry_Max; //Set Display timer
+					SetAuraGlow( true, pPlayer, 0, 255, 0 ); //Green
 					string szSound;
 					switch( Math.RandomLong( 0, 2 ) )
 					{
@@ -1558,8 +1670,8 @@ final class CSCRPGCore
 					}
 					g_AuraIsActive = true;
 					ClientSidedSound( pPlayer, szSound );
-					string szNick = pPlayer.pev.netname;
-					g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " has activated their The Warrior's Battlecry!\n");
+					//string szNick = pPlayer.pev.netname;
+					//g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "[RPG MOD] " + szNick + " has activated their First Aid!\n");
 					
 					g_Achivements.GiveAchievement( pPlayer, "warriorinside", true );
 				}

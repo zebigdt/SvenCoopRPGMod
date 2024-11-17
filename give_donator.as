@@ -9,7 +9,6 @@ namespace GiveToPlayer
 	void GiveDonatorWeapons( CBasePlayer@ pPlayer )
 	{
 		if ( pPlayer is null ) return;
-		GiveWeapon( pPlayer, "weapon_usp45akimbo" );
-		GiveWeapon( pPlayer, "weapon_saber" );
+		//GiveWeapon( pPlayer, "weapon_usp45akimbo" ); EXAMPLE
 	}
 }

@@ -1,33 +1,38 @@
-#include "ammo/ammo_crystals"
-#include "weapons/weapon_keyblade"
-#include "weapons/weapon_buffsg552"
-#include "weapons/weapon_skull11"
-#include "weapons/weapon_af_ethereal"
-#include "weapons/weapon_af_ethereal_mk2"
-#include "weapons/weapon_fotn"
-#include "weapons/weapon_stormgiant"
-#include "weapons/weapon_saber"
-#include "weapons/weapon_usp45akimbo"
+//Includes for RPG plugin custom weapons and ammo
+//#include "ammo/ammo_crystals"
+//#include "weapons/weapon_keyblade"
+//#include "weapons/weapon_buffsg552"
+//#include "weapons/weapon_skull11"
+//#include "weapons/weapon_af_ethereal"
+//#include "weapons/weapon_af_ethereal_mk2"
+//#include "weapons/weapon_fotn"
+//#include "weapons/weapon_stormgiant"
+//#include "weapons/weapon_saber"
+//#include "weapons/weapon_usp45akimbo"
+//#include "weapons/weapon_spas12e"
 
 #include "lib/playermodels"
 #include "lib/giftfromthegods"
-#include "lib/weaponshop"
+//#include "lib/weaponshop" //Completely empty file
 
 void RegisterAllWeapons()
 {
-	// Weapons
-	RegisterKeyBlade();
-	RegisterWeapon_buffsg55();
-	RegisterWeapon_skull11();
-	RegisterWeapon_Ethereal();
-	RegisterWeapon_Ethereal_MK2();
-	RegisterWeapon_Fotn();
-	Registerweapon_stormgiant();
-	RegisterWeapon_Saber();
-	RegisterWeapon_usp45akimbo5();
+	//Register custom weapons and ammo
 
-	// Ammo
-	RegisterAmmoCrystals();
+		// Weapons
+	//RegisterKeyBlade();
+	//RegisterWeapon_buffsg55();
+	//RegisterWeapon_skull11();
+	//RegisterWeapon_Ethereal();
+	//RegisterWeapon_Ethereal_MK2();
+	//RegisterWeapon_Fotn();
+	//Registerweapon_stormgiant();
+	//RegisterWeapon_Saber();
+	//RegisterWeapon_usp45akimbo5();
+	//RegisterWeapon_spas12e();
+
+		// Ammo
+	//RegisterAmmoCrystals();
 }
 
 void RPGGetDefaultShellInfo( CBasePlayer@ pPlayer, Vector& out ShellVelocity, Vector& out ShellOrigin, float forwardScale, float rightScale, float upScale )

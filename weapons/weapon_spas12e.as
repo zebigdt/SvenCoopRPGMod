@@ -3,23 +3,24 @@
 // For available ammotypes, or animation seqences
 // Check WeaponInfo.txt under the root scrpg folder
 
-enum Weapon_Skull11_e
+enum Weapon_Spas12e_e
 {
-	ANIM_SKULL11_IDLE = 0,
-	ANIM_SKULL11_SHOOT1,
-	ANIM_SKULL11_SHOOT2,
-	ANIM_SKULL11_RELOAD,
-	ANIM_SKULL11_DRAW,
+	sm_idle = 0,
+	shoot_double,
+	reload_start,
+	reload_middle,
+	reload_end,
+	draw,
 };
 
-class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
+class weapon_spas12e : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 {
 	private CBasePlayer@ m_pPlayer
 	{
 		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
 		set       	{ self.m_hPlayer = EHandle( @value ); }
 	}
-	private int iDefault_MaxAmmo = 20;
+	private int iDefault_MaxAmmo = 8;
 	private int iDefault_MaxCarry = iDefault_MaxAmmo; //Was * 10
 
 	bool GetItemInfo( ItemInfo& out info )
@@ -50,23 +51,25 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 		self.PrecacheCustomModels();
 
 		// Set the model
-		SetWeaponModel( 0, "models/afterlife/w_skull11.mdl" );
-		SetWeaponModel( 1, "models/afterlife/v_skull11.mdl" );
-		SetWeaponModel( 2, "models/afterlife/p_skull11.mdl" );
+		SetWeaponModel( 0, "models/w_shotgun.mdl" );
+		SetWeaponModel( 1, "models/v_shotgun.mdl" );
+		SetWeaponModel( 2, "models/p_shotgun.mdl" );
 
 		SetWeaponWorldScale( 1.0 );
-		SetFireRate( 0.25 );
-		SetWeaponDamage( 10 );
+		SetFireRate( 1.42 );
+		SetWeaponDamage( 20 );
 		SetWeaponAccuracy( VECTOR_CONE_2DEGREES );	// Vector( 2, 2, 2 )
 
 		g_Game.PrecacheModel( GetWeaponModel( 0 ) );	// World model
 		g_Game.PrecacheModel( GetWeaponModel( 1 ) );	// View model
 		g_Game.PrecacheModel( GetWeaponModel( 2 ) );	// Player model
-		g_Game.PrecacheModel( "sprites/afterlife/ef_balrog1.spr" );	
+		g_Game.PrecacheModel( "sprites/explode1.spr" );	
 		g_Game.PrecacheModel( "sprites/afterlife/sheet_skull11.spr" );
-		// Precahe this sprite sheet file!
+
+		// Precache the sprite sheet file
 		g_Game.PrecacheGeneric( "sprites/afterlife/weapon_skull11.txt" );
 
+		//Precache weapon sounds
 		PrecacheSound( "afterlife/skull11/boltpull.wav" );
 		PrecacheSound( "afterlife/skull11/fire.wav" );
 		PrecacheSound( "afterlife/skull11/clipin.wav" );
@@ -80,7 +83,7 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 
 	bool Deploy()
 	{
-		return SetDeploy( ANIM_SKULL11_DRAW, "m16", 1.12f );
+		return SetDeploy( draw, "shotgun", 1.12f );
 	}
 
 	bool CanDeploy()
@@ -103,7 +106,7 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 		// >> Bullet count
 		// >> Distance
 		// >> Multiply Damage
-		if ( !Attack_Firearm( "afterlife/skull11/fire.wav", 1, 9216, false ) )
+		if ( !Attack_Firearm( "weapons/dbarrel2.wav", 1, 9216, false ) )
 			return;
 
 		// Explosion shot
@@ -113,13 +116,12 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 		// >> Damage
 		// >> Size
 		// >> Range
-		Attack_Explosion( "", "sprites/afterlife/ef_balrog1.spr", 9216, 15, 64, 200 ); //Damage was GetWeaponDamage() * 2
+		Attack_Explosion( "", "sprites/explode1.spr", 9216, 40, 64, 200 ); //Damage was GetWeaponDamage() * 2
 
 		// Play animation
 		switch( Math.RandomLong( 0, 1 ) )
 		{
-			case 0: self.SendWeaponAnim( ANIM_SKULL11_SHOOT1 ); break;
-			case 1: self.SendWeaponAnim( ANIM_SKULL11_SHOOT2 ); break;
+			case 0: self.SendWeaponAnim( shoot_double ); break;
 		}
 
 		// Set the new timer
@@ -136,7 +138,9 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 		// >> Animation
 		// >> Timer
 		// >> Bodygroup
-		Reload( iDefault_MaxAmmo, ANIM_SKULL11_RELOAD, 4.06, 0 );
+		//Reload( 0, reload_start, 0.75, 0 );
+		Reload( 1, reload_middle, 0.48, 0 );
+		//Reload( 0, reload_end, 0.85, 0 );
 
 		BaseClass.Reload();
 	}
@@ -145,18 +149,18 @@ class weapon_skull11 : ScriptBasePlayerWeaponEntity, weapon_afterlife_base
 	{
 		if ( self.m_flTimeWeaponIdle > WeaponTimeBase() )
 			return;
-		self.SendWeaponAnim( ANIM_SKULL11_IDLE, 0, 0 );
+		self.SendWeaponAnim( sm_idle, 0, 0 );
 		self.m_flTimeWeaponIdle = WeaponTimeBase() + 3.1f;
 	}
 }
 
-string WeaponName_skull11()
+string WeaponName_spas12e()
 {
-	return "weapon_skull11";
+	return "weapon_spas12e";
 }
 
-void RegisterWeapon_skull11()
+void RegisterWeapon_spas12e()
 {
-	g_CustomEntityFuncs.RegisterCustomEntity( WeaponName_skull11(), WeaponName_skull11() );
-	g_ItemRegistry.RegisterWeapon( WeaponName_skull11(), "afterlife", "buckshot", "" );
+	g_CustomEntityFuncs.RegisterCustomEntity( WeaponName_spas12e(), WeaponName_spas12e() );
+	g_ItemRegistry.RegisterWeapon( WeaponName_spas12e(), "afterlife", "buckshot", "" );
 }
