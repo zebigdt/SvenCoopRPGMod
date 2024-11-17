@@ -65,6 +65,10 @@ void PluginInit()
 	g_Hooks.RegisterHook( Hooks::Player::ClientDisconnect, @RPGMOD_ClientDisconnect );
 	g_Hooks.RegisterHook( Hooks::Player::PlayerPostThink, @RPGMOD_PlayerPostThink );
 	g_Hooks.RegisterHook( Hooks::Player::ClientSay, @RPGMOD_ClientSay );
+
+	g_Hooks.RegisterHook(Hooks::Weapon::WeaponPrimaryAttack, @OnWeaponPrimaryAttack);
+	g_Hooks.RegisterHook(Hooks::Weapon::WeaponSecondaryAttack, @OnWeaponSecondaryAttack);
+	g_Hooks.RegisterHook(Hooks::Weapon::WeaponTertiaryAttack, @OnWeaponTertiaryAttack);
 	
 	//DifficultySettings_RegisterHooks();
 	

@@ -37,12 +37,12 @@ const int AB_ARMOR_MAX = 10; //Default 210
 const int AB_HEALTH_REGEN_MAX = 10; //Default 50
 const int AB_ARMOR_REGEN_MAX = 10; //Default 55
 const int AB_AMMO_MAX = 10; //Default 30
-const int AB_WEAPON_MAX = 10; //Default 10
+const int AB_EXPLOSIVE_MAX = 5; //Default 10
 const int AB_DOUBLEJUMP_MAX = 1; //Default 5
-const int AB_AURA_MAX = 10; //Default 20
-const int AB_HOLYGUARD_MAX = 10; //Default 20
+const int AB_FIRSTAID_MAX = 10; //Default 20
+const int AB_SHOCKRIFLE_MAX = 10; //Default 20
 
-const int MAX_LEVEL = AB_HEALTH_MAX + AB_ARMOR_MAX + AB_HEALTH_REGEN_MAX + AB_ARMOR_REGEN_MAX + AB_AMMO_MAX + AB_WEAPON_MAX + AB_DOUBLEJUMP_MAX + AB_AURA_MAX + AB_HOLYGUARD_MAX; //MUST ADD UP TO SKILL TOTAL
+const int MAX_LEVEL = AB_HEALTH_MAX + AB_ARMOR_MAX + AB_HEALTH_REGEN_MAX + AB_ARMOR_REGEN_MAX + AB_AMMO_MAX + AB_EXPLOSIVE_MAX + AB_DOUBLEJUMP_MAX + AB_FIRSTAID_MAX + AB_SHOCKRIFLE_MAX; //MUST ADD UP TO SKILL TOTAL
 const int MAX_PRESTIGE = 10; //Default 10
 
 //Unused
@@ -112,13 +112,13 @@ final class CSCRPGCore
 					if ( data is null ) continue;
 					
 					// Fix the model not showing
-					if ( data.iWaitTimer_UseModel >= 0 )
+					if ( data.iWaitTimer_Prestige >= 0 )
 					{
-						if ( data.iWaitTimer_UseModel == 0 )
+						if ( data.iWaitTimer_Prestige == 0 )
 						{
 							
 						}
-						data.iWaitTimer_UseModel--;
+						data.iWaitTimer_Prestige--;
 					}
 					
 					// Check our regen stuff
@@ -159,7 +159,7 @@ final class CSCRPGCore
 	{
 		if ( pPlayer is null ) return;
 		if ( data is null ) return;
-		if ( data.iWaitTimer_UseModel > 0 ) return;
+		if ( data.iWaitTimer_Prestige > 0 ) return;
 		
 		// Prestige Achievements
 		if ( data.iPrestige >= 1 )
@@ -230,8 +230,8 @@ final class CSCRPGCore
 			//output += "Your SteamID:  " + data.szSteamID + "\n"; Disabled
 
 			//Ammo/Explosive Timers on HUD
-			output += "Ammo Resupply - (" + data.iWaitTimer_AmmoDrop + "s)\n";
-			output += "Explosives Resupply - (" + data.iWaitTimer_WeaponDrop + "s)\n";
+			output += "Ammo Regeneration - (" + data.iWaitTimer_AmmoDrop + "s)\n";
+			output += "Explosives Regeneration - (" + data.iWaitTimer_WeaponDrop + "s)\n";
 		
 		if ( data.iPoints > 0 )
 			output += "\nYou have " + data.iPoints + " skillpoints available!\nWrite /skills to spend them!\n\n";
@@ -534,7 +534,7 @@ final class CSCRPGCore
 				else
 				{
 					g_AmmoDrop.GiveDropExplosive( pPlayer, data.iStat_explosiveregen ); //Give ammo for all explosives
-					data.iWaitTimer_WeaponDrop = 120 - ( data.iStat_explosiveregen + data.iPrestige ) * 1; //Reset timer based on level
+					data.iWaitTimer_WeaponDrop = 120 - ( data.iStat_explosiveregen + data.iPrestige ) * 4; //Reset timer based on level
 				}
 			}
 		}

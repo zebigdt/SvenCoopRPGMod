@@ -42,7 +42,7 @@ class PlayerData
 	int iWaitTimer_Hurt = 0;
 	int iWaitTimer_Hurt_Snd = 0;		// We don't want to spam this
 	int iWaitTimer_SndEffect = 0;		// We don't want to spam this
-	int iWaitTimer_UseModel = 3;
+	int iWaitTimer_Prestige = 3;
 	int iWaitTimer_AmmoDrop = 5;		// First Ammo Resupply
 	int iWaitTimer_WeaponDrop = 10;		// First Explosive Drop
 
@@ -90,7 +90,7 @@ class PlayerData
 		iWaitTimer_Hurt = 0;
 		iWaitTimer_Hurt_Snd = 0;
 		iWaitTimer_SndEffect = 0;
-		iWaitTimer_UseModel = 3;
+		iWaitTimer_Prestige = 3;
 		
 		iWeekly_Exp = 0;
 		iWeekly_Exp_Max = 0;
