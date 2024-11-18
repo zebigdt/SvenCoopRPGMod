@@ -11,7 +11,7 @@ final class DifficultySettings
 		150.0, //357 (Deagle is 2/3 of this) - Default 66
 		25.0, //Uzi (Also Akimbo, Gold do +1 extra damage) - Default 10
 		25.0, //MP5 (9mm AR) - Default 8
-		20.0, //Buckshot (7 pellets primary, 6 pellets secondary) - Default 10
+		15.0, //Buckshot (7 pellets primary, 6 pellets secondary) - Default 10
 		200.0, //Crossbow (Alt weapon mode is explosive on impact) - Default 60
 		30.0, //556 (M16/SAW/Minigun, also effects enemies damage!) - Default 12
 		150.0, //M203 (ARgrenades) - Default 100

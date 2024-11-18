@@ -13,7 +13,7 @@ void CVAR_MedicSound( const CCommand@ args )
 	g_SCRPGCore.DoSoundEffect( pPlayer, true );
 }
 
-void CVAR_GrenadeSound( const CCommand@ args )
+void CVAR_GrenadeSound( const CCommand@ args ) 
 {
 	CBasePlayer@ pPlayer = g_ConCommandSystem.GetCurrentPlayer();
 	if ( pPlayer is null ) return;
@@ -54,16 +54,23 @@ void MapInit()
 
 
 	// Precache explosion sprites and sounds - Needs to be done in a function seperately.
-    g_Game.PrecacheModel("sprites/zerogxplode.spr");
+    g_Game.PrecacheModel("sprites/fexplo1.spr");
     g_SoundSystem.PrecacheSound("weapons/explode3.wav");
-    g_SoundSystem.PrecacheSound("buttons/lightswitch2.wav");
+    g_SoundSystem.PrecacheSound("common/wpn_hudon.wav");
     
     // Gib-related precaches
     g_Game.PrecacheModel("models/hgibs.mdl");
     g_SoundSystem.PrecacheSound("common/bodysplat.wav");
+	g_Game.PrecacheModel("models/blkop_apache.mdl");
+	g_Game.PrecacheModel("models/apache.mdl");
+	g_Game.PrecacheModel("models/HVR.mdl");
+	g_Game.PrecacheModel("sprites/white.spr");
+	g_Game.PrecacheModel("sprites/fexplo.spr");
+	g_Game.PrecacheModel("models/metalplategibs_green.mdl");
+	g_Game.PrecacheMonster("monster_apache", true);
 }
 
-void PluginInit()
+void PluginInit() 
 {
 	g_Module.ScriptInfo.SetAuthor( "JonnyBoy0719" );
 	g_Module.ScriptInfo.SetContactInfo( "https://twitter.com/JohanEhrendahl" );
@@ -88,6 +95,56 @@ void PluginInit()
 	//g_EngineFuncs.ServerCommand( "mp_survival_minplayers 90\n" );
 }
 
+
+CBaseEntity@ SpawnNPC(CBasePlayer@ pPlayer, string npc_name, float size = 1.0f) {
+    if(pPlayer is null)
+        return null;
+    
+    // Get player's position and offset it further forward and up for larger entities
+    Vector spawnPos = pPlayer.pev.origin;
+    
+    // Increase offset distances, especially for apache
+    float forwardDist = (npc_name.ToLowercase() == "monster_apache") ? 100.0f : 50.0f;
+    float upDist = (npc_name.ToLowercase() == "monster_apache") ? 100.0f : 30.0f;
+    
+    Vector forwardOffset = g_Engine.v_forward * forwardDist;
+    Vector upOffset = Vector(0, 0, upDist);
+    spawnPos = spawnPos + forwardOffset + upOffset;
+
+    // Create npc with adjusted position
+    dictionary keys;
+    keys["origin"] = spawnPos.ToString();
+    keys["angles"] = pPlayer.pev.angles.ToString();
+    keys["spawnflags"] = "1"; // Start active
+    keys["classname"] = npc_name;
+    
+    CBaseEntity@ npc = g_EntityFuncs.CreateEntity(npc_name, keys, true);
+    
+    if(npc !is null) {
+       // Set visual size
+        npc.pev.scale = size;
+        
+        // Apply size scaling to bounds
+        npc.pev.mins = Vector(-2, -2, 0);
+        npc.pev.maxs = Vector(2, 2, 3);
+        
+        // Set new collision bounds
+        g_EntityFuncs.SetSize(npc.pev, npc.pev.mins, npc.pev.maxs);
+
+        // Cast to monster for monster-specific settings
+        CBaseMonster@ monster = cast<CBaseMonster@>(npc);
+        if(monster !is null) {
+            monster.SetClassification(CLASS_PLAYER_ALLY);
+            monster.StartPlayerFollowing(pPlayer, false);
+            monster.SetPlayerAlly(true);
+        }
+        
+        npc.pev.targetname = "pet_npc_" + pPlayer.entindex();
+    }
+    
+    return npc;
+}
+
 HookReturnCode OnWeaponTertiaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ pWeapon) 
 {
     if (pWeapon is null || pPlayer is null)
@@ -99,21 +156,33 @@ HookReturnCode OnWeaponTertiaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ p
 		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
 		if(data !is null)
 		{
-			if(data.iPrestige == 1)
+			if(data.iPrestige == 0)
 			{
-				// Only handle shotgun tertiary attack
-				if (pWeapon.GetClassname() == "weapon_shotgun" ) 
+				if(!data.bIsUsingSpecialRounds)
 				{
-					string steamId = g_EngineFuncs.GetPlayerAuthId(pPlayer.edict());
+					CBaseEntity@ npc = SpawnNPC(pPlayer,"monster_apache",0.1);
+					if(npc !is null) {
+						g_Game.AlertMessage(at_console, "Spawned friendly npc for player\n");
+					}
+					//if(pWeapon.GetClassname() == "weapon_shotgun" || pWeapon.GetClassname() == "weapon_357" || pWeapon.GetClassname() == "weapon_m249")
 					
-					// Toggle mode
-					data.bExplosiveRounds = !data.bExplosiveRounds;
+					data.bIsUsingSpecialRounds = true;
+					data.sSpecialWeapon = pWeapon.GetClassname(); // Only current weapon allowed to use special rounds
+					data.iSpecialRoundsCount = pWeapon.iMaxClip(); // The max number of rounds in this weapon's magazine is the number of special rounds
+					int currentAmmo = pWeapon.m_iClip;
+					pWeapon.m_iClip = 0; // Set current magazine round count to zero
+					pPlayer.m_rgAmmo(pWeapon.m_iPrimaryAmmoType, pPlayer.m_rgAmmo(pWeapon.m_iPrimaryAmmoType) + currentAmmo); // Return ammo to reserve
 					
-					// Notify player of mode change																		//true      //false
-					g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Explosive rounds: " + (data.bExplosiveRounds ? "ENABLED" : "DISABLED") + "\n");
+					// Force reload
+					pWeapon.Reload(); 
+					pWeapon.FinishReload(); 
+					
+					// Notify player of mode change
+					g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Special rounds activated\n"); 
 						
-					// Play toggle sound
-					g_SoundSystem.PlaySound(pPlayer.edict(), CHAN_WEAPON, "buttons/lightswitch2.wav", 1.0f, ATTN_NORM, 0, 100);
+					// // Play toggle sound
+					g_SoundSystem.PlaySound(pPlayer.edict(), CHAN_WEAPON, "common/wpn_hudon.wav", 1.0f, ATTN_NORM, 0, 100);
+					
 				}
 			}
 		}
@@ -124,57 +193,55 @@ HookReturnCode OnWeaponTertiaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ p
 
 HookReturnCode OnWeaponPrimaryAttack(CBasePlayer@ pPlayer, CBasePlayerWeapon@ pWeapon) 
 {
-    if (pWeapon is null || pPlayer is null)
-        return HOOK_CONTINUE;
-
+    if (pWeapon is null || pPlayer is null) return HOOK_CONTINUE;
 	string szSteamId = g_EngineFuncs.GetPlayerAuthId( pPlayer.edict() );
 	if( g_PlayerCoreData.exists( szSteamId ) )
 	{
 		PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
 		if(data !is null)
 		{
-			// Check if weapon is shotgun
-			if (pWeapon.GetClassname() == "weapon_shotgun" )  
+			// Check if the current weapon is holding special rounds
+			if (pWeapon.GetClassname() == data.sSpecialWeapon)  
 			{
-				string steamId = g_EngineFuncs.GetPlayerAuthId(pPlayer.edict());
-				
-				// Only create explosion if explosive mode is enabled for this player
-				if (data.bExplosiveRounds) 
+				if(data.iSpecialRoundsCount > 0)
 				{
+					int roundsCount = data.iSpecialRoundsCount-1;
+					g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, "Special rounds count: "+ roundsCount +"\n");
+					
+					// Reduce amount of special rounds
+					data.iSpecialRoundsCount--;
+					
+					// Special rounds for shotgun and revolver
+					//if(pWeapon.GetClassname() == "weapon_shotgun" || pWeapon.GetClassname() == "weapon_357" || pWeapon.GetClassname() == "weapon_m249")
+					
 					// Get player's view angles and position
 					Vector vecSrc = pPlayer.GetGunPosition();
 					Vector vecAiming = pPlayer.GetAutoaimVector(0.0f);
 					
 					// Create tracer effect for visual feedback
 					NetworkMessage tracers(MSG_BROADCAST, NetworkMessages::SVC_TEMPENTITY);
-					tracers.WriteByte(TE_TRACER);
-					tracers.WriteCoord(vecSrc.x);
-					tracers.WriteCoord(vecSrc.y);
-					tracers.WriteCoord(vecSrc.z);
+					tracers.WriteByte(TE_TRACER); //entity effect used?
+					tracers.WriteCoord(vecSrc.x); //X vel
+					tracers.WriteCoord(vecSrc.y); //Y vel
+					tracers.WriteCoord(vecSrc.z); //Z vel
 					tracers.WriteCoord(vecSrc.x + vecAiming.x * 4096);
 					tracers.WriteCoord(vecSrc.y + vecAiming.y * 4096);
 					tracers.WriteCoord(vecSrc.z + vecAiming.z * 4096);
 					tracers.End();
 					
-					// Create explosion at impact point
+					// Trace line at 
 					TraceResult tr;
 					g_Utility.TraceLine(vecSrc, vecSrc + vecAiming * 4096, dont_ignore_monsters, pPlayer.edict(), tr);
-					
-					// Create explosion with enhanced visual effect
-					g_EntityFuncs.CreateExplosion(tr.vecEndPos, Vector(0, 0, 0), null, 100, true);
-					
-					// Apply radius damage with combined damage flags for guaranteed gibbing
-					// DMG_ALWAYSGIB ensures gibbing regardless of damage
-					// DMG_BLAST | DMG_NEVERGIB removed as they could interfere with gibbing
-					g_WeaponFuncs.RadiusDamage(
-						tr.vecEndPos,   //damage position
-						pWeapon.pev,    //inflictor
-						pPlayer.pev,    //attacker
-						2.0f,       //damage amount
-						100.0f,     //radius
-						CLASS_NONE, //classification
-						DMG_ACID //damage type
-					);
+						
+					//Add | DMG_ALWAYSGIB | DMG_NEVERGIB after damage type to enable/disable gibbing
+					//RadiusDamage(const Vector& in vecSrc, entvars_t@ pevInflictor, entvars_t@ pevAttacker, float flDamage, float flRadius, int iClassIgnore, int bitsDamageType)
+					//g_EntityFuncs.CreateExplosion(tr.vecEndPos, Vector(0, 0, 0), null, 100, false);
+					g_WeaponFuncs.RadiusDamage(tr.vecEndPos, pWeapon.pev, pPlayer.pev, 100.0f, 200.0f, CLASS_NONE, DMG_BLAST | DMG_ALWAYSGIB);
+
+				}
+				else
+				{
+					data.bIsUsingSpecialRounds = !data.bIsUsingSpecialRounds;
 				}
 			}
 		}

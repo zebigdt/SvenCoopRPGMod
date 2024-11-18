@@ -366,64 +366,62 @@ final class CSCRPGCore
 		pPlayer.pev.armorvalue += ( data.iStat_armor + data.iPrestige ) * 10;
 	}
 
-			//First Aid (Was Battlecry)
+	//First Aid (Was Battlecry)
 	private void DoFirstAid( CBasePlayer@ pPlayer, PlayerData@ data )
 	{	
-		// Get % of max health
-		int ihealskill = data.iStat_firstaid; //Get skill level
-		float flhpvalue_self = pPlayer.pev.max_health / 100 * ( ihealskill * 10 ); //Self healing amount
-		
-		// Get % of target player max health
-		float flhpvalue = pPlayer.pev.max_health / 100 * ( ihealskill * 8 ); //Target healing amount
-		
-		// Convert to floats to int
-		int ihpvalue_self = int( flhpvalue_self ); //Healing value for self
-		int ihpvalue = int( flhpvalue ); //Healing value for targets
-
-		// Heal Mode - If not dead, heal full amount
-		if ( pPlayer.pev.health > 0 )
-			pPlayer.pev.health += ihpvalue_self;
-
-		// Revive Mode - If dead, revive, only heal for half
-			if ( pPlayer.pev.health < 1 )	
-				pPlayer.Revive();
-
-					if ( pPlayer.pev.health > 0 )
-						pPlayer.pev.health += ihpvalue_self / 2; //Only heal half, to penalise revival, but to help not get rekt when surrounded.
-
-		// If we ever overheal, remove it
-		if ( pPlayer.pev.health > pPlayer.pev.max_health )
-			pPlayer.pev.health = pPlayer.pev.max_health;
-		
-		// Within radius? then give them some boost!		//Doesn't seem to work, really needs fixing. I will alter this to heal a different amount to nearby players for when it is fixed.
-		float distance = 300.0f;
-		for ( int i = 1; i <= g_Engine.maxClients; i++ )
+		if (pPlayer !is null)
 		{
-			CBasePlayer@ pTarget = g_PlayerFuncs.FindPlayerByIndex( i );
-			if ( (pTarget !is null) && (pTarget.IsConnected()) )
+			// Get % of max health
+			int ihealskill = data.iStat_firstaid; //Get skill level
+			float flhpvalue_self = pPlayer.pev.max_health / 100 * ( ihealskill * 10 ); //Self healing amount
+			
+			// Get % of target player max health
+			float flhpvalue = pPlayer.pev.max_health / 100 * ( ihealskill * 10 ); //Target healing amount
+			
+			// Convert to floats to int
+			int ihpvalue_self = int( flhpvalue_self ); //Healing value for self
+			int ihpvalue = int( flhpvalue ); //Healing value for targets
+
+			// Heal Mode - If not dead, heal full amount
+			if ( pPlayer.pev.health > 0 )
+				pPlayer.pev.health += ihpvalue_self;
+
+			// Revive Mode - If dead, revive, only heal for half
+				if ( pPlayer.pev.health < 1 )	
+					pPlayer.Revive();
+
+						if ( pPlayer.pev.health > 0 )
+							pPlayer.pev.health += ihpvalue_self / 2; //Only heal half, to penalise revival, but to help not get rekt when surrounded.
+
+			// If we ever overheal, remove it
+			if ( pPlayer.pev.health > pPlayer.pev.max_health )
+				pPlayer.pev.health = pPlayer.pev.max_health;
+			
+			//First Aid AoE Radius
+			//float flFirstAidAoE = 300.0f;
+			for (int i = 1; i <= g_Engine.maxClients; i++) 
 			{
-				// Don't increase ourselves
-				//if ( pTarget == pPlayer ) continue;
-				Vector vEntOrigin = (pTarget.pev.absmin + pTarget.pev.absmax)/2;
-				if ( (vEntOrigin - pPlayer.pev.origin).Length() < distance )
+				CBasePlayer@ otherPlayer = g_PlayerFuncs.FindPlayerByIndex(i);
+				if(otherPlayer !is null)
 				{
+					string playerName = otherPlayer.pev.netname;
+					g_PlayerFuncs.ClientPrint(pPlayer, HUD_PRINTTALK, playerName + "\n");
 					// Heal Mode - If not dead, heal full amount
-					if ( pPlayer.pev.health > 0 )
-						pPlayer.pev.health += ihpvalue;
-
-					// Revive Mode - If dead, revive, only heal for half
-						if ( pPlayer.pev.health < 1 )	
-							pPlayer.Revive();
-
-								if ( pPlayer.pev.health > 0 )
-									pPlayer.pev.health += ihpvalue;
-
+					if ( otherPlayer.pev.health > 0 )
+					{
+						otherPlayer.pev.health += ihpvalue;
+					}
+					else // Revive Mode - If dead, revive, only heal for half
+					{
+						otherPlayer.Revive();
+						otherPlayer.pev.health += ihpvalue / 2;
+					}
 					// If we ever overheal, remove it
-					if ( pPlayer.pev.health > pPlayer.pev.max_health )
-						pPlayer.pev.health = pPlayer.pev.max_health;
+					if ( otherPlayer.pev.health > otherPlayer.pev.max_health ) otherPlayer.pev.health = otherPlayer.pev.max_health;
 
-					g_Achivements.GiveAchievement( pPlayer, "teamplayer", true );
+					g_Achivements.GiveAchievement( otherPlayer, "teamplayer", true );
 				}
+				
 			}
 		}
 	}
@@ -1411,6 +1409,12 @@ final class CSCRPGCore
 		{
 			PlayerData@ data = cast<PlayerData@>(g_PlayerCoreData[szSteamId]);
 			data.iWaitTimer_Hurt = 0;
+
+			// reset special rounds
+			data.sSpecialWeapon = "";
+			data.iSpecialRoundsCount = 0;
+			data.bIsUsingSpecialRounds = false;
+			
 			SetArmorHealth( pPlayer, data );
 		}
 		

@@ -73,8 +73,10 @@ class PlayerData
 	bool bIsDonator = false;
 	
 	// Prestige effect toggles
-	bool bExplosiveRounds = false;
-	
+	bool bIsUsingSpecialRounds = false;
+	int iSpecialRoundsCount = 0;
+	string sSpecialWeapon = "";
+
 	//These timers will be used if reconnected.
 	void ResetOnJoin()
 	{
